@@ -2,24 +2,25 @@
 LangGraph StateGraph - Value Network Alerting Pipeline
 
 11-agent workflow:
-  orchestrator -> data_fetcher -> data_validator -> anomaly_detector -> triage_classifier
+  orchestrator -> data_fetcher_real -> data_validator -> anomaly_detector -> triage_classifier
   -> (conditional: alert_triggered?)
      -> YES: parallel_analysis (contributor + geo + env) -> insight_generator -> report_builder
         -> (conditional: mode != BACKTEST?)
            -> YES: notifier -> END
            -> NO: END
      -> NO: END
+
+The graph is compiled once as a module-level singleton (get_compiled_graph()).
+No checkpointer is used — each pipeline run is independent.
 """
 
-import uuid
 from typing import Optional
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from backend.agents.anomaly_detector import anomaly_detector_agent
 from backend.agents.contributor_analyzer import contributor_analyzer_agent
-from backend.agents.data_fetcher import data_fetcher_agent
+from backend.agents.data_fetcher_real import data_fetcher_agent
 from backend.agents.data_validator import data_validator_agent
 from backend.agents.environment_splitter import environment_splitter_agent
 from backend.agents.geo_analyzer import geo_analyzer_agent
@@ -142,11 +143,17 @@ def build_graph() -> StateGraph:
     return workflow
 
 
-def compile_graph():
-    """Build and compile the graph, ready for invocation."""
-    workflow = build_graph()
-    memory = MemorySaver()
-    return workflow.compile(checkpointer=memory)
+_compiled_graph = None
+
+
+def get_compiled_graph():
+    """Return compiled graph singleton. Compiled once, reused across runs."""
+    global _compiled_graph
+    if _compiled_graph is None:
+        workflow = build_graph()
+        _compiled_graph = workflow.compile()
+        logger.info("Graph compiled (singleton)")
+    return _compiled_graph
 
 
 # --- Convenience runner ---
@@ -189,10 +196,8 @@ def run_pipeline(
         mode,
     )
 
-    app = compile_graph()
-    thread_id = str(uuid.uuid4())
-    config = {"configurable": {"thread_id": thread_id}}
-    result = app.invoke(initial_state, config)
+    app = get_compiled_graph()
+    result = app.invoke(initial_state)
 
     logger.info(
         "Pipeline complete: alert_triggered=%s, severity=%s, errors=%d",

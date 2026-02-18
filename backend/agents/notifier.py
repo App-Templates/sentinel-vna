@@ -20,6 +20,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from backend.db.database import get_db
+from backend.db.operations import find_open_alert
 from backend.utils.config_loader import get_config
 from backend.utils.logger import get_logger
 from backend.workflow.state import AlertState
@@ -33,13 +34,46 @@ SEVERITY_EMOJI = {"P0": "\U0001f534", "P1": "\U0001f7e0", "P2": "\U0001f7e1"}
 
 
 def _save_to_db(state: AlertState) -> bool:
-    """Save alert to SQLite database."""
+    """Save alert to SQLite database. In LIVE mode, dedup against existing open alerts."""
     payload = state.get("alert_payload", {})
     if not payload:
         logger.warning("No alert payload to save")
         return False
 
     try:
+        mode = state.get("mode", "LIVE")
+        channel_group = payload.get("channel_group", "GOOGLE")
+        alert_rule = payload.get("alert_rule", "A1")
+        new_alert_id = payload.get("alert_id", "")
+
+        # Dedup: in LIVE mode, check for an existing open alert for the same channel/rule
+        if mode != "BACKTEST":
+            existing = find_open_alert(channel_group, alert_rule)
+            if existing:
+                existing_id = existing.get("alert_id", "")
+                logger.info(
+                    "Dedup: updating existing alert %s instead of creating new %s",
+                    existing_id, new_alert_id,
+                )
+                now = datetime.now(timezone.utc).isoformat()
+                with get_db() as conn:
+                    conn.execute(
+                        """UPDATE alerts
+                           SET revenue_current = ?,
+                               revenue_baseline = ?,
+                               revenue_delta_pct = ?,
+                               updated_at = ?
+                           WHERE alert_id = ?""",
+                        (
+                            payload.get("revenue", {}).get("current", 0),
+                            payload.get("revenue", {}).get("baseline", 0),
+                            payload.get("revenue", {}).get("delta_pct", 0),
+                            now,
+                            existing_id,
+                        ),
+                    )
+                return True
+
         with get_db() as conn:
             now = datetime.now(timezone.utc).isoformat()
 
@@ -53,12 +87,12 @@ def _save_to_db(state: AlertState) -> bool:
                     created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    payload.get("alert_id", ""),
+                    new_alert_id,
                     payload.get("timestamp", ""),
                     payload.get("severity", "P1"),
-                    payload.get("channel_group", "GOOGLE"),
+                    channel_group,
                     "OPEN",
-                    payload.get("alert_rule", "A1"),
+                    alert_rule,
                     payload.get("revenue", {}).get("current", 0),
                     payload.get("revenue", {}).get("baseline", 0),
                     payload.get("revenue", {}).get("delta_pct", 0),
@@ -74,7 +108,7 @@ def _save_to_db(state: AlertState) -> bool:
                     now,
                 ),
             )
-        logger.info("Alert saved to DB: %s", payload.get("alert_id"))
+        logger.info("Alert saved to DB: %s", new_alert_id)
         return True
     except Exception as e:
         logger.error("Failed to save alert to DB: %s", e)

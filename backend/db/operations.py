@@ -145,6 +145,26 @@ def update_alert_status(alert_id: str, new_status: AlertStatus) -> bool:
     return updated
 
 
+def find_open_alert(
+    channel_group: str,
+    alert_rule: str,
+    dedup_window_hours: int = 6,
+) -> Optional[dict[str, Any]]:
+    """Find an existing OPEN or ACK alert for the same channel/rule within the dedup window."""
+    with get_db() as conn:
+        row = conn.execute(
+            """SELECT * FROM alerts
+               WHERE channel_group = ?
+               AND alert_rule = ?
+               AND status IN ('OPEN', 'ACK')
+               AND timestamp >= datetime('now', ?)
+               ORDER BY timestamp DESC
+               LIMIT 1""",
+            (channel_group, alert_rule, f'-{dedup_window_hours} hours'),
+        ).fetchone()
+    return _row_to_dict(row) if row else None
+
+
 # ---------------------------------------------------------------------------
 # Events
 # ---------------------------------------------------------------------------
