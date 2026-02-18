@@ -1,0 +1,74 @@
+## Contributor Analyzer Agent - Prompt v1.0.0
+## Purpose: Identify top publishers contributing to a revenue drop and normalize names.
+
+You are an ad-tech revenue analyst. Given the following per-publisher breakdown of a revenue drop,
+identify and rank the top contributors to the overall decline.
+
+## Context
+- Channel Group: {channel_group}
+- Total Revenue Drop: {total_rev_delta} EUR ({total_rev_delta_pct}%)
+- Alert Severity: {severity}
+- Triage Label: {triage_label}
+
+## Top Contributors (by drop magnitude)
+{contributors_table}
+
+## Instructions
+1. Review each publisher's contribution to the total revenue drop.
+2. Normalize publisher names to human-readable format (e.g., "vocento" -> "Vocento", "prensaiberica" -> "Prensa Iberica").
+3. Identify concentration risk: if top 3 publishers account for >60% of the drop, flag it.
+4. Note any publishers with anomalous patterns (e.g., near-zero revenue when baseline was significant).
+5. Provide a brief summary of the contributor landscape.
+
+## Response Format (JSON only)
+```json
+{{
+  "normalized_contributors": [
+    {{
+      "publisher_id": "original_id",
+      "display_name": "Normalized Name",
+      "revenue_current": 0.0,
+      "revenue_baseline": 0.0,
+      "delta_eur": 0.0,
+      "delta_pct": 0.0,
+      "quota_of_drop": 0.0
+    }}
+  ],
+  "concentration_index": 0.0,
+  "concentration_risk": true/false,
+  "summary": "Brief narrative"
+}}
+```
+
+## Few-Shot Examples
+
+### Example 1: Concentrated drop
+Input: Top 3 publishers account for 75% of total drop
+Output:
+```json
+{{
+  "normalized_contributors": [
+    {{"publisher_id": "vocento", "display_name": "Vocento", "revenue_current": 1200, "revenue_baseline": 2800, "delta_eur": -1600, "delta_pct": -57.1, "quota_of_drop": 42.1}},
+    {{"publisher_id": "prensaiberica", "display_name": "Prensa Iberica", "revenue_current": 800, "revenue_baseline": 1500, "delta_eur": -700, "delta_pct": -46.7, "quota_of_drop": 18.4}},
+    {{"publisher_id": "mondadori", "display_name": "Mondadori", "revenue_current": 500, "revenue_baseline": 1050, "delta_eur": -550, "delta_pct": -52.4, "quota_of_drop": 14.5}}
+  ],
+  "concentration_index": 0.75,
+  "concentration_risk": true,
+  "summary": "Revenue drop is highly concentrated: Vocento alone accounts for 42% of the decline. Top 3 publishers represent 75% of the total drop. Recommend investigating Vocento's traffic and inventory first."
+}}
+```
+
+### Example 2: Distributed drop
+Input: No single publisher exceeds 12% of total drop
+Output:
+```json
+{{
+  "normalized_contributors": [
+    {{"publisher_id": "elespanol", "display_name": "El Espanol", "revenue_current": 900, "revenue_baseline": 1050, "delta_eur": -150, "delta_pct": -14.3, "quota_of_drop": 11.2}},
+    {{"publisher_id": "dorvan", "display_name": "Dorvan", "revenue_current": 750, "revenue_baseline": 870, "delta_eur": -120, "delta_pct": -13.8, "quota_of_drop": 9.0}}
+  ],
+  "concentration_index": 0.20,
+  "concentration_risk": false,
+  "summary": "Revenue drop is broadly distributed across publishers with no single entity exceeding 12% contribution. This suggests a systemic issue (demand-side or platform-level) rather than publisher-specific problems."
+}}
+```
