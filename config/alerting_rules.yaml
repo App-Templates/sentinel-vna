@@ -1,5 +1,5 @@
-version: "1.1.0"
-last_updated: "2026-02-21T00:00:00Z"
+version: "1.1.1"
+last_updated: "2026-02-21T14:44:00Z"
 
 data_gap:
   enabled: true
@@ -55,6 +55,18 @@ dual_thresholds:
     yesterday_delta_percent: -15
     ma_14d_divergence_percent: -12
   attention_severity: P2-WATCH
+
+margin_alert:
+  enabled: true
+  ecpm_drop_thresholds:
+    P1:
+      drop_percent: -25
+      duration_hours: 3
+    P2:
+      drop_percent: -15
+      duration_hours: 4
+  min_impressions: 1000
+  baseline_weeks: 7
 
 near_zero:
   revenue_threshold_eur: 100
