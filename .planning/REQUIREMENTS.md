@@ -15,7 +15,7 @@
 
 - [x] **ALRT-01**: Il sistema genera alert quando il margine % scende sotto soglia configurabile per publisher/gruppo
 - [x] **ALRT-02**: Il sistema rileva coverage=zero e classifica con triage dedicato (policy Google, MCM, ads.txt)
-- [ ] **ALRT-03**: Il sistema rileva correlazione coverage↓ + CPM↑↑ come indicatore di pricing rule errata
+- [x] **ALRT-03**: Il sistema rileva correlazione coverage↓ + CPM↑↑ come indicatore di pricing rule errata
 - [ ] **ALRT-04**: Il sistema esegue alerting attivo anche nel weekend e festivi con scheduling ridotto (2x/giorno)
 - [ ] **ALRT-05**: Il sistema supporta soglie doppie: alert operativo (30% deviazione) e alert di attenzione (5-15% deviazione)
 
@@ -80,7 +80,7 @@
 | DRIFT-03 | Phase 1 | Pending |
 | ALRT-01 | Phase 2 | Complete |
 | ALRT-02 | Phase 2 | Complete |
-| ALRT-03 | Phase 2 | Pending |
+| ALRT-03 | Phase 2 | Complete |
 | ALRT-04 | Phase 1 | Pending |
 | ALRT-05 | Phase 1 | Pending |
 | FEED-01 | Phase 3 | Pending |
