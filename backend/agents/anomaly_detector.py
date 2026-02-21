@@ -318,6 +318,153 @@ def _detect_linear_drift(state: AlertState) -> Optional[dict]:
     }
 
 
+def _compute_14d_moving_average(state: AlertState) -> Optional[dict]:
+    """
+    Compare current revenue vs 14-day moving average.
+
+    Returns dict:
+    {
+        "avg_revenue_14d": float,
+        "current_revenue": float,
+        "delta_pct": float,
+        "divergence_hours": int,  # How many consecutive hours below threshold
+        "triggered": bool,
+        "severity": str,
+    }
+
+    Or None if data insufficient.
+
+    This uses hourly data from the past 14 days (same hour, same weekday pattern)
+    to compute a moving average baseline, then compares current hour against it.
+    Triggers only if divergence is sustained for configured hours.
+    """
+    config = get_config()
+    ma = config.comparative_alerting.moving_average_14d
+
+    if not ma.enabled:
+        return None
+
+    current_ts = _parse_state_timestamp(state)
+    if current_ts is None:
+        return None
+
+    channel = state.get("channel_group", "GOOGLE")
+    df = _get_hourly_df()
+    if df is None:
+        return None
+
+    # Current hour revenue
+    mask_current = (df["timestamp"] == current_ts) & (df["channel_group"] == channel)
+    current_rows = df[mask_current]
+    if current_rows.empty:
+        return None
+    current_revenue = float(current_rows["revenue"].sum())
+
+    # Compute 14-day moving average: same hour of day, last 14 days
+    # Use same-hour same-weekday pattern for seasonal stability
+    hour_of_day = current_ts.hour
+    day_of_week = current_ts.weekday()
+
+    baseline_revenues = []
+    for days_back in range(1, 15):  # 14 days back
+        past_ts = current_ts - timedelta(days=days_back)
+        # Only include if same day-of-week (Monday vs Monday, etc)
+        if past_ts.weekday() == day_of_week:
+            mask_past = (df["timestamp"] == past_ts) & (df["channel_group"] == channel)
+            past_rows = df[mask_past]
+            if not past_rows.empty:
+                baseline_revenues.append(float(past_rows["revenue"].sum()))
+
+    if len(baseline_revenues) < 2:  # Need at least 2 data points
+        logger.info("14d moving average: insufficient baseline data (%d points)", len(baseline_revenues))
+        return None
+
+    avg_revenue = sum(baseline_revenues) / len(baseline_revenues)
+
+    if avg_revenue <= 0:
+        return None
+
+    delta_pct = ((current_revenue - avg_revenue) / avg_revenue) * 100.0
+
+    # Check divergence for consecutive hours
+    # For now, we compute for current hour only. To check "sustained" divergence,
+    # we need to look back at previous hours. For simplicity, we'll count consecutive
+    # hours in a follow-up (Phase 1.1). For now, mark as triggered if single hour exceeds.
+
+    triggered = False
+    severity = "NONE"
+    divergence_hours = 0
+
+    if delta_pct <= ma.divergence_threshold_percent:
+        # Check if this is sustained (look back sustained_hours)
+        consecutive_count = 0
+        for hours_back in range(ma.sustained_hours):
+            check_ts = current_ts - timedelta(hours=hours_back)
+            mask_check = (df["timestamp"] == check_ts) & (df["channel_group"] == channel)
+            check_rows = df[mask_check]
+            if check_rows.empty:
+                break  # Gap in data, can't verify sustained divergence
+
+            check_revenue = float(check_rows["revenue"].sum())
+
+            # Recompute baseline for that hour
+            check_hour = check_ts.hour
+            check_dow = check_ts.weekday()
+            check_baseline = []
+            for d in range(1, 15):
+                past_check = check_ts - timedelta(days=d)
+                if past_check.weekday() == check_dow:
+                    mask_b = (df["timestamp"] == past_check) & (df["channel_group"] == channel)
+                    b_rows = df[mask_b]
+                    if not b_rows.empty:
+                        check_baseline.append(float(b_rows["revenue"].sum()))
+
+            if len(check_baseline) < 2:
+                break
+
+            check_avg = sum(check_baseline) / len(check_baseline)
+            if check_avg <= 0:
+                break
+
+            check_delta = ((check_revenue - check_avg) / check_avg) * 100.0
+
+            if check_delta <= ma.divergence_threshold_percent:
+                consecutive_count += 1
+            else:
+                break  # Chain broken
+
+        divergence_hours = consecutive_count
+
+        if divergence_hours >= ma.sustained_hours:
+            triggered = True
+            severity = ma.severity
+            logger.info(
+                "14d moving average ALERT: %.2f EUR vs %.2f EUR avg (%.1f%%), "
+                "sustained %d hours, severity=%s",
+                current_revenue, avg_revenue, delta_pct, divergence_hours, severity,
+            )
+        else:
+            logger.info(
+                "14d moving average: divergence detected but not sustained "
+                "(%d/%d hours required)",
+                divergence_hours, ma.sustained_hours,
+            )
+    else:
+        logger.info(
+            "14d moving average OK: %.2f EUR vs %.2f EUR avg (%.1f%%)",
+            current_revenue, avg_revenue, delta_pct,
+        )
+
+    return {
+        "avg_revenue_14d": round(avg_revenue, 2),
+        "current_revenue": round(current_revenue, 2),
+        "delta_pct": round(delta_pct, 1),
+        "divergence_hours": divergence_hours,
+        "triggered": triggered,
+        "severity": severity,
+    }
+
+
 def _load_prompt_template() -> str:
     """Load the prompt template from file."""
     try:
@@ -405,6 +552,11 @@ def _statistical_fallback(state: AlertState) -> AlertState:
     rev_zscore = _calculate_zscore(
         current.get("revenue", 0), baseline.get("revenue", 0), rev_std
     )
+
+    # Compute 14d moving average comparison (v1.1)
+    ma_14d = _compute_14d_moving_average(state)
+    if ma_14d is not None:
+        state["moving_average_14d"] = ma_14d
 
     # Time-of-day context
     is_off_peak = hour < 6 or hour >= 22
