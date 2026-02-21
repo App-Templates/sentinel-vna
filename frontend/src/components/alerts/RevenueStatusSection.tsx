@@ -4,7 +4,7 @@ import { MetricCard } from '../ui/MetricCard'
 import { DeltaIndicator } from '../ui/DeltaIndicator'
 import { Badge } from '../ui/Badge'
 import { RevenueTrendChart } from '../charts/RevenueTrendChart'
-import { formatCurrency } from '../../lib/utils'
+import { formatCurrency, cn } from '../../lib/utils'
 import type { Alert, MetricDataPoint } from '../../types/alert'
 
 interface RevenueStatusSectionProps {
@@ -51,6 +51,44 @@ export function RevenueStatusSection({ alert, trendData }: RevenueStatusSectionP
             <DeltaIndicator value={alert.revenue_delta_pct} size="lg" />
           </div>
         </div>
+
+        {alert.margin_metrics && (
+          <div className="border-t border-gray-200 pt-4">
+            <h4 className="mb-3 text-sm font-semibold text-gray-700">
+              eCPM Analysis (Margin Alert A5)
+            </h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <p className="text-xs font-medium text-gray-500 mb-1">Current eCPM</p>
+                <p className="text-2xl font-semibold">
+                  &euro;{alert.margin_metrics.current_ecpm.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {alert.margin_metrics.current_impressions.toLocaleString()} impressions
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <p className="text-xs font-medium text-gray-500 mb-1">Baseline eCPM</p>
+                <p className="text-2xl font-semibold">
+                  &euro;{alert.margin_metrics.baseline_ecpm.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {alert.margin_metrics.baseline_impressions.toLocaleString()} impressions
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <p className="text-xs font-medium text-gray-500 mb-1">eCPM Change</p>
+                <p className={cn(
+                  "text-2xl font-semibold",
+                  alert.margin_metrics.ecpm_delta_pct < 0 ? "text-red-600" : "text-green-600"
+                )}>
+                  {alert.margin_metrics.ecpm_delta_pct > 0 ? '+' : ''}{alert.margin_metrics.ecpm_delta_pct.toFixed(1)}%
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Margin compression detected</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
           <h4 className="mb-3 text-sm font-semibold text-gray-700">Revenue Trend (7 Weeks)</h4>
