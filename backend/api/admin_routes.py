@@ -366,3 +366,110 @@ def update_alerting_rules(request: Request, body: AlertingRulesUpdate):
     # Reload singleton
     updated_config = ConfigLoader().reload()
     return updated_config.model_dump()
+
+
+# ---------------------------------------------------------------------------
+# Slack Configuration endpoints
+# ---------------------------------------------------------------------------
+
+
+class SlackConfigUpdate(BaseModel):
+    webhook_url: Optional[str] = None
+    channel: Optional[str] = None
+    immediate_severities: Optional[list[str]] = None
+    digest_severities: Optional[list[str]] = None
+    digest_time_utc: Optional[str] = None
+
+
+@router.get("/slack-config")
+@limiter.limit("60/minute")
+def get_slack_config(request: Request):
+    """Return current Slack notification configuration from alerting_rules.yaml."""
+    try:
+        with open(ALERTING_RULES_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        slack_config = config.get("slack_notifications", {})
+        return {
+            "webhook_url": slack_config.get("webhook_url", ""),
+            "channel": slack_config.get("channel", "sentinel-alerts"),
+            "immediate_severities": slack_config.get("immediate_severities", ["P0"]),
+            "digest_severities": slack_config.get("digest_severities", ["P1", "P2"]),
+            "digest_time_utc": slack_config.get("digest_time_utc", "08:00"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read Slack config: {e}")
+
+
+@router.put("/slack-config")
+@limiter.limit("10/hour")
+def update_slack_config(request: Request, body: SlackConfigUpdate):
+    """Update Slack notification configuration in alerting_rules.yaml."""
+    try:
+        # Read current YAML
+        with open(ALERTING_RULES_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        # Update slack_notifications section
+        if "slack_notifications" not in config:
+            config["slack_notifications"] = {}
+
+        updates = body.model_dump(exclude_none=True)
+        config["slack_notifications"].update(updates)
+
+        # Update timestamp
+        config["last_updated"] = datetime.utcnow().isoformat() + "Z"
+
+        # Write YAML
+        with open(ALERTING_RULES_PATH, "w") as f:
+            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+
+        # Reload config singleton
+        ConfigLoader().reload()
+
+        # Return updated config
+        slack_config = config.get("slack_notifications", {})
+        return {
+            "webhook_url": slack_config.get("webhook_url", ""),
+            "channel": slack_config.get("channel", "sentinel-alerts"),
+            "immediate_severities": slack_config.get("immediate_severities", ["P0"]),
+            "digest_severities": slack_config.get("digest_severities", ["P1", "P2"]),
+            "digest_time_utc": slack_config.get("digest_time_utc", "08:00"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update Slack config: {e}")
+
+
+class TestSlackRequest(BaseModel):
+    webhook_url: str
+
+
+@router.post("/test-slack")
+@limiter.limit("10/hour")
+def test_slack(request: Request, body: TestSlackRequest):
+    """Test Slack webhook connectivity by sending a test message."""
+    from urllib.request import Request as URLRequest, urlopen
+    from urllib.error import URLError
+
+    if not body.webhook_url:
+        return {"success": False, "message": "Webhook URL is required"}
+
+    try:
+        payload = json.dumps({"text": "SENTINEL test notification from admin panel"}).encode("utf-8")
+        req = URLRequest(
+            body.webhook_url,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                return {"success": True, "message": "Test message sent successfully"}
+            else:
+                return {"success": False, "message": f"Slack returned status {resp.status}"}
+
+    except URLError as e:
+        return {"success": False, "message": f"Connection error: {str(e)}"}
+    except Exception as e:
+        return {"success": False, "message": f"Failed to send test message: {str(e)}"}

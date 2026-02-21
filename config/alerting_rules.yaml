@@ -1,11 +1,97 @@
-version: "1.1.3"
-last_updated: "2026-02-21T14:50:00Z"
-
+comparative_alerting:
+  moving_average_14d:
+    divergence_threshold_percent: -25
+    enabled: true
+    severity: P1
+    sustained_hours: 3
+  yesterday_comparison:
+    enabled: true
+    severity_mapping:
+      below_minus_10: P2
+      below_minus_20: P1
+      below_minus_30: P0
+    threshold_percent: -30
+coverage_zero_alert:
+  baseline_weeks: 7
+  consecutive_hours: 2
+  coverage_threshold: 0.001
+  enabled: true
+  min_bacino: 100
+  severity: P1
 data_gap:
   enabled: true
   max_gap_hours: 4
   severity: P1
-
+data_sources:
+  athena_retry_count: 1
+  athena_timeout_seconds: 30
+  cache_ttl_hours: 24
+drift_detection:
+  enabled: true
+  threshold_percent: -8
+  window_days: 7
+drift_regression:
+  cumulative_drop_threshold_percent: -15.0
+  enabled: true
+  min_data_points: 10
+  slope_threshold_percent_per_day: -2.0
+  window_days_max: 30
+  window_days_min: 14
+dual_thresholds:
+  attention:
+    ma_14d_divergence_percent: -12
+    revenue_drop_percent: -15
+    yesterday_delta_percent: -15
+  attention_severity: P2-WATCH
+  enabled: true
+  operational:
+    ma_14d_divergence_percent: -25
+    revenue_drop_percent: -30
+    yesterday_delta_percent: -30
+geo_clusters:
+  ES:
+  - ES
+  ITA:
+  - IT
+  OTHER:
+  - BR
+  - MX
+  - AR
+  - PT
+  - CO
+  - CL
+  - PE
+  - US
+  - UK
+  - FR
+  - DE
+last_updated: '2026-02-21T19:03:17.228118Z'
+margin_alert:
+  baseline_weeks: 7
+  ecpm_drop_thresholds:
+    P1:
+      drop_percent: -25
+      duration_hours: 3
+    P2:
+      drop_percent: -15
+      duration_hours: 4
+  enabled: true
+  min_impressions: 1000
+near_zero:
+  consecutive_periods: 3
+  coverage_threshold: 0.05
+  revenue_threshold_eur: 100
+notifications:
+  email_enabled: true
+  slack_enabled: true
+pricing_rule_alert:
+  baseline_weeks: 7
+  correlation_strength: -0.7
+  coverage_drop_threshold: -15
+  cpm_spike_threshold: 20
+  enabled: true
+  min_impressions: 500
+  severity: P1
 revenue_anomaly:
   P0:
     drop_percent: -15
@@ -16,167 +102,68 @@ revenue_anomaly:
   P2:
     drop_percent: -5
     duration_hours: 4
-
-drift_detection:
-  enabled: true
-  window_days: 7
-  threshold_percent: -8
-
-drift_regression:
-  enabled: true
-  window_days_min: 14
-  window_days_max: 30
-  slope_threshold_percent_per_day: -2.0
-  cumulative_drop_threshold_percent: -15.0
-  min_data_points: 10
-
-comparative_alerting:
-  yesterday_comparison:
-    enabled: true
-    threshold_percent: -30
-    severity_mapping:
-      below_minus_30: P0
-      below_minus_20: P1
-      below_minus_10: P2
-  moving_average_14d:
-    enabled: true
-    divergence_threshold_percent: -25
-    sustained_hours: 3
-    severity: P1
-
-dual_thresholds:
-  enabled: true
-  operational:
-    revenue_drop_percent: -30
-    yesterday_delta_percent: -30
-    ma_14d_divergence_percent: -25
-  attention:
-    revenue_drop_percent: -15
-    yesterday_delta_percent: -15
-    ma_14d_divergence_percent: -12
-  attention_severity: P2-WATCH
-
-margin_alert:
-  enabled: true
-  ecpm_drop_thresholds:
-    P1:
-      drop_percent: -25
-      duration_hours: 3
-    P2:
-      drop_percent: -15
-      duration_hours: 4
-  min_impressions: 1000
-  baseline_weeks: 7
-
-coverage_zero_alert:
-  enabled: true
-  coverage_threshold: 0.001  # Coverage below 0.1% considered "zero"
-  min_bacino: 100  # Minimum bacino to consider coverage-zero significant
-  consecutive_hours: 2  # Must be zero for 2+ consecutive hours to trigger
-  severity: P1  # Coverage-zero is always critical
-  baseline_weeks: 7  # Compare to 7-week same-hour baseline
-
-pricing_rule_alert:
-  enabled: true
-  coverage_drop_threshold: -15  # Coverage must drop at least 15%
-  cpm_spike_threshold: 20  # eCPM must increase at least 20%
-  correlation_strength: -0.7  # Pearson correlation coefficient (negative = inverse correlation)
-  severity: P1  # Pricing rule issues are critical
-  min_impressions: 500  # Minimum impressions for reliable eCPM calculation
-  baseline_weeks: 7
-
-near_zero:
-  revenue_threshold_eur: 100
-  coverage_threshold: 0.05
-  consecutive_periods: 3
-
-triage:
-  traffic_driven_threshold: -10
-  coverage_driven_threshold: -10
-
-top_contributors:
-  top_n: 15
-  min_quota_percent: 1
-
-geo_clusters:
-  ITA:
-    - IT
-  ES:
-    - ES
-  OTHER:
-    - BR
-    - MX
-    - AR
-    - PT
-    - CO
-    - CL
-    - PE
-    - US
-    - UK
-    - FR
-    - DE
-
-top_publishers:
-  - vocento
-  - prensaiberica
-  - mondadori
-  - elespanol
-  - dorvan
-  - unidadeditorial
-  - thecore
-  - alayansmedia
-  - grupogodo
-  - piemme
-  - talksmedia
-  - adplay
-  - grupojoly
-  - mediamond
-  - eleconomista
-  - magellano
-  - movingup
-  - infobae
-  - speed
-  - terralatam
-  - mediaset
-  - rpdigital
-  - sociedadevicradesportiva
-  - larazon
-  - veesible
-  - svgruppe
-  - larepublica
-  - webboh
-  - elnacional
-  - grupoperfilbr
-  - eluniversal
-  - cofina
-  - grupomultimedios
-  - noticiasilimitadas
-  - yobee
-  - sportnetwork
-
 scheduling:
+  channels:
+  - GOOGLE
+  - OPEN_BIDDING
   interval_hours: 2
   recheck_interval_minutes: 5
-  channels:
-    - GOOGLE
-    - OPEN_BIDDING
   weekend_schedule:
     enabled: true
-    times_per_day: 2  # Run 2x/day on weekends (vs 12x weekday)
-    run_hours: [10, 18]  # Run at 10:00 and 18:00 UTC on Sat/Sun
-
-data_sources:
-  athena_timeout_seconds: 30
-  athena_retry_count: 1
-  cache_ttl_hours: 24
-
-notifications:
-  slack_enabled: true
-  email_enabled: true
-
+    run_hours:
+    - 10
+    - 18
+    times_per_day: 2
 slack_notifications:
-  webhook_url: ""  # Populated via admin UI
-  channel: "sentinel-alerts"
-  immediate_severities: ["P0"]
-  digest_severities: ["P1", "P2"]
-  digest_time_utc: "08:00"  # Daily digest sent at 8 AM UTC
+  channel: sentinel-test
+  digest_severities:
+  - P1
+  - P2
+  digest_time_utc: 08:00
+  immediate_severities:
+  - P0
+  webhook_url: https://hooks.slack.com/services/TEST123
+top_contributors:
+  min_quota_percent: 1
+  top_n: 15
+top_publishers:
+- vocento
+- prensaiberica
+- mondadori
+- elespanol
+- dorvan
+- unidadeditorial
+- thecore
+- alayansmedia
+- grupogodo
+- piemme
+- talksmedia
+- adplay
+- grupojoly
+- mediamond
+- eleconomista
+- magellano
+- movingup
+- infobae
+- speed
+- terralatam
+- mediaset
+- rpdigital
+- sociedadevicradesportiva
+- larazon
+- veesible
+- svgruppe
+- larepublica
+- webboh
+- elnacional
+- grupoperfilbr
+- eluniversal
+- cofina
+- grupomultimedios
+- noticiasilimitadas
+- yobee
+- sportnetwork
+triage:
+  coverage_driven_threshold: -10
+  traffic_driven_threshold: -10
+version: 1.1.3
