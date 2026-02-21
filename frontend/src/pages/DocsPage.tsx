@@ -60,11 +60,11 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
   return (
     <>
       {/* ALERT RULES */}
-      <Section id="alert-rules" icon={AlertTriangle} title="Regole di Alert (A0, A1, A2, A3)" open={openSections.has('alert-rules')} onToggle={toggle}>
+      <Section id="alert-rules" icon={AlertTriangle} title="Regole di Alert (A0, A1, A2, A3, A5, A6, A7)" open={openSections.has('alert-rules')} onToggle={toggle}>
         <p className="mb-4">
           Sentinel monitora i ricavi della rete pubblicitaria Adkaora confrontando le metriche correnti con una
           <strong> baseline storica</strong> (stessa ora, stesso giorno della settimana, media delle <strong>7 settimane</strong> precedenti).
-          Quando rileva un'anomalia, genera un alert secondo una di quattro regole:
+          Quando rileva un'anomalia, genera un alert secondo una di sette regole:
         </p>
         <table className="mb-4 w-full border-collapse">
           <thead><tr><Th>Regola</Th><Th>Nome</Th><Th>Cosa rileva</Th><Th>Quando scatta</Th></tr></thead>
@@ -89,11 +89,26 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
               <Td>Dati mancanti oltre la soglia configurata</Td>
               <Td>Gap &gt; <strong>4 ore</strong> senza dati. Alert tecnico immediato, bypassa triage e analisi.</Td>
             </tr>
+            <tr>
+              <Td><Badge color="purple">A5</Badge></Td><Td className="font-medium">Margin/eCPM Drop</Td>
+              <Td>Calo significativo di eCPM rispetto alla baseline</Td>
+              <Td>eCPM sceso <strong>&ge; 25%</strong> (P1) o <strong>&ge; 15%</strong> (P2) con min <strong>1000 impressioni</strong>. Indica deterioramento pricing.</Td>
+            </tr>
+            <tr>
+              <Td><Badge color="red">A6</Badge></Td><Td className="font-medium">Coverage Zero</Td>
+              <Td>Coverage azzerata o quasi-zero su publisher</Td>
+              <Td>Coverage &lt; <strong>0.1%</strong> (threshold 0.001) con min <strong>100 bacino</strong> per <strong>2 ore</strong> consecutive. Severity sempre <strong>P1</strong>. Triage dedicato identifica causa: GOOGLE_POLICY, MCM_CONFIG, ADS_TXT, TECHNICAL_ISSUE.</Td>
+            </tr>
+            <tr>
+              <Td><Badge color="orange">A7</Badge></Td><Td className="font-medium">Pricing Rule Error</Td>
+              <Td>Coverage cala mentre CPM schizza (correlazione inversa)</Td>
+              <Td>Correlation score <strong>&le; -0.7</strong> tra coverage e CPM con min <strong>500 impressioni</strong>. Severity sempre <strong>P1</strong>.</Td>
+            </tr>
           </tbody>
         </table>
         <div className="rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
-            <strong>Perche' quattro regole?</strong> A0 cattura i problemi tecnici (dati mancanti). A1 cattura i cali improvvisi. A2 le erosioni lente (-2%/giorno = -14%/settimana). A3 le morti silenziose (publisher che smettono di generare revenue).
+            <strong>Perche' sette regole?</strong> A0 cattura i problemi tecnici (dati mancanti). A1 cattura i cali improvvisi. A2 le erosioni lente (-2%/giorno = -14%/settimana). A3 le morti silenziose (publisher che smettono di generare revenue). A5 rileva deterioramento pricing (eCPM). A6 rileva blocchi demand/config (coverage zero). A7 rileva errori floor pricing (coverage vs CPM inversi).
           </p>
         </div>
       </Section>
@@ -133,6 +148,16 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
         </table>
         <div className="rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800"><strong>Soglia -10%:</strong> sotto il 10% il segnale e' indistinguibile dal rumore. Simmetrica per evitare bias.</p>
+        </div>
+        <div className="mt-4">
+          <p className="mb-2"><strong>Triage Coverage-Zero (A6):</strong></p>
+          <p className="mb-3">Quando un alert A6 viene generato, il triage standard (TRAFFIC/COVERAGE/MIXED/REVENUE_ONLY) NON si applica. Il sistema usa un triage dedicato che classifica in:</p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><strong>GOOGLE_POLICY:</strong> Zero improvviso, bacino stabile → violazione policy Google</li>
+            <li><strong>MCM_CONFIG:</strong> Zero graduale, bacino stabile → problema configurazione MCM</li>
+            <li><strong>ADS_TXT:</strong> Zero con variazione bacino + coverage storica alta → problema ads.txt</li>
+            <li><strong>TECHNICAL_ISSUE:</strong> Fallback per edge case tecnici</li>
+          </ul>
         </div>
       </Section>
 
