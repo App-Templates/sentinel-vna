@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from backend.agents.notifier import send_daily_digest
 from backend.db.models import ChannelGroup, RecheckStatus
 from backend.db.operations import (
     get_alert_by_id,
@@ -175,6 +176,16 @@ async def weekend_alerting_cycle() -> None:
         logger.error("Weekend alerting cycle error: %s", exc, exc_info=True)
 
 
+def send_daily_digest_job():
+    """Wrapper for send_daily_digest to handle scheduler context."""
+    logger.info("Daily digest job triggered")
+    try:
+        result = send_daily_digest()
+        logger.info("Digest result: %s", result)
+    except Exception as e:
+        logger.error("Daily digest job failed: %s", e)
+
+
 def start_scheduler() -> None:
     scheduler = _get_scheduler()
     if scheduler.running:
@@ -226,6 +237,28 @@ def start_scheduler() -> None:
                 replace_existing=True,
             )
             logger.info("Added weekend job: run at %02d:00 UTC on Sat/Sun", hour)
+
+    # Daily digest: send accumulated P1/P2 alerts at configured time
+    try:
+        import yaml
+        from pathlib import Path
+        config_path = Path(__file__).parent.parent.parent / "config" / "alerting_rules.yaml"
+        with open(config_path, "r") as f:
+            config_dict = yaml.safe_load(f)
+        digest_time = config_dict.get("slack_notifications", {}).get("digest_time_utc", "08:00")
+        digest_hour, digest_minute = map(int, digest_time.split(':'))
+    except Exception:
+        digest_hour, digest_minute = 8, 0  # Default 08:00 UTC
+
+    scheduler.add_job(
+        send_daily_digest_job,
+        trigger=CronTrigger(hour=digest_hour, minute=digest_minute, timezone='UTC'),
+        id='daily_digest',
+        name='Daily Slack Digest',
+        replace_existing=True,
+        max_instances=1,
+    )
+    logger.info("Scheduled daily digest job at %02d:%02d UTC", digest_hour, digest_minute)
 
     scheduler.start()
     weekend_info = ""
