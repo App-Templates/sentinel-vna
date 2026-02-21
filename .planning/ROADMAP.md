@@ -132,7 +132,10 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 
 **Goal:** Tutta la documentazione in-app (tecnica e operativa) riflette accuratamente le nuove regole, soglie, alert types e workflow introdotti nelle fasi 1-5
 **Depends on:** Phase 5
-**Plans:** 4/4 plans complete
+**Plans:** 4 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 6 to break down)
+- [ ] 06-01-PLAN.md — Update operational docs for Phases 1-2 (A5/A6/A7 alerts, drift regression, P2-WATCH, dual thresholds, comparative alerting)
+- [ ] 06-02-PLAN.md — Update operational docs for Phase 3 (feedback system, assignment, intervention tracking)
+- [ ] 06-03-PLAN.md — Update operational docs for Phase 4 (Slack notifications, daily digest, severity-based routing)
+- [ ] 06-04-PLAN.md — Update technical docs (database schema, API reference, config sections)
