@@ -56,10 +56,13 @@ Plans:
   1. Quando il margine % di un publisher scende sotto la soglia configurata, l'operatore riceve un alert con dettaglio margine attuale vs soglia
   2. Quando la coverage di un publisher va a zero, il sistema genera un alert con triage dedicato che indica la causa probabile (policy Google, MCM, ads.txt)
   3. Quando coverage cala e contemporaneamente il CPM schizza, il sistema genera un alert "pricing rule errata" con evidenza della correlazione
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — A5 margin/eCPM drop alert rule
+- [ ] 02-02-PLAN.md — A6 coverage-zero alert with root cause triage
+- [ ] 02-03-PLAN.md — A7 pricing-rule alert (coverage↓ + CPM↑ correlation)
+- [ ] 02-04-PLAN.md — Frontend visualization for new alert types
 
 ### Phase 3: Operator Workflow
 **Goal**: Gli operatori possono interagire con gli alert (feedback, assegnazione, interventi manuali) e il sistema accumula conoscenza operativa per publisher
