@@ -843,7 +843,7 @@ function TechnicalDocs({ openSections, toggle }: { openSections: Set<string>; to
 
       {/* API REFERENCE */}
       <Section id="api" icon={Code} title="API Reference" open={openSections.has('api')} onToggle={toggle}>
-        <p className="mb-4">Tutte le API sono sotto <code className="rounded bg-gray-100 px-1 text-xs">/api</code>. Auth su <code className="rounded bg-gray-100 px-1 text-xs">/auth</code>. Documentazione OpenAPI live: <code className="rounded bg-gray-100 px-1 text-xs">/docs</code>.</p>
+        <p className="mb-4">Tutte le API sono sotto <code className="rounded bg-gray-100 px-1 text-xs">/api</code>. Auth su <code className="rounded bg-gray-100 px-1 text-xs">/auth</code>. Documentazione OpenAPI live: <code className="rounded bg-gray-100 px-1 text-xs">/docs</code>. <strong>~34 endpoint totali</strong> (v1.0: 19, Phase 3-4: +15).</p>
 
         <h4 className="mb-2 font-semibold text-gray-900">Alert</h4>
         <table className="mb-4 w-full border-collapse text-xs">
@@ -867,6 +867,45 @@ function TechnicalDocs({ openSections, toggle }: { openSections: Set<string>; to
             <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/publishers/:id/weekly-kpis</Td><Td>KPI settimanali (revenue, eCPM, bacino, coverage)</Td></tr>
             <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/publishers/:id/ecpm-analysis</Td><Td>Analisi stagionale eCPM con optimization windows</Td></tr>
             <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/publishers/:id/recurring-patterns</Td><Td>Pattern ricorrenti cross-anno (eCPM, nascosti, zone di rischio)</Td></tr>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/publishers/:id/feedback-history</Td><Td>Storico feedback per publisher con contesto alert (limit default 50, max 200). Rate limit: 60/min. <Badge color="purple">Phase 3</Badge></Td></tr>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/publishers/:id/interventions</Td><Td>Interventions per publisher (limit default 50, max 200). Rate limit: 60/min. <Badge color="purple">Phase 3</Badge></Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Feedback <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/alerts/:id/feedback</Td><Td>Submit feedback per alert. Body: {'{"feedback_type": "REAL|FALSE_POSITIVE_*", "comment": "..."}'}. Auto-estrae publisher_id. Rate limit: 30/min.</Td></tr>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/alerts/:id/feedbacks</Td><Td>Lista tutti i feedback per un alert (ordinati per timestamp DESC). Rate limit: 60/min.</Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Assignment <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/alerts/:id/assign</Td><Td>Assegna alert. Body: {'{"assigned_to": "user@adkaora.com"}'}. Validazione @adkaora.com. INSERT OR REPLACE per reassignment. Rate limit: 30/min.</Td></tr>
+            <tr><Td><Badge color="red">DELETE</Badge></Td><Td className="font-mono">/api/alerts/:id/assign</Td><Td>Rimuove assignment da alert. Rate limit: 30/min.</Td></tr>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/alerts?assigned_to=email</Td><Td>Filtra alert per assignee (estensione endpoint esistente GET /api/alerts).</Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Interventions <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/interventions</Td><Td>Crea intervention. Body: {'{"publisher_id", "intervention_type", "timestamp", "description", "value_before?", "value_after?", "alert_id?"}'}. Types: PRICING_RULE, FLOOR_CPM, DEMAND_PARTNER_CONFIG, AD_UNIT_SETUP, POLICY_CHANGE, OTHER. Rate limit: 30/min.</Td></tr>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/alerts/:id/link-intervention</Td><Td>Collega intervention esistente ad alert. Body: {'{"intervention_id": N}'}. Rate limit: 30/min.</Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Metrics <Badge color="blue">Phase 4</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/metrics</Td><Td>Pipeline metrics ultimi N giorni (runs count, success rate, avg duration, LLM usage). Params: days (default 7). Rate limit: 60/min.</Td></tr>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/metrics/revenue-status-24h</Td><Td>Revenue 24h comparison (current vs 24h ago per channel). Rate limit: 60/min.</Td></tr>
           </tbody>
         </table>
 
@@ -879,6 +918,27 @@ function TechnicalDocs({ openSections, toggle }: { openSections: Set<string>; to
             <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/backtest</Td><Td>Avvia backtest (start_date, end_date, step_hours)</Td></tr>
             <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/admin/datasources</Td><Td>Configurazione data sources</Td></tr>
             <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/admin/datasources</Td><Td>Aggiorna configurazione data sources</Td></tr>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/admin/datasources/test</Td><Td>Testa connessione a parquet/Athena/GAM. Rate limit: 10/hour.</Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Admin - Slack <Badge color="blue">Phase 4</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/admin/slack-config</Td><Td>Config Slack corrente (webhook_url mascherato). Rate limit: 60/min.</Td></tr>
+            <tr><Td><Badge color="orange">PUT</Badge></Td><Td className="font-mono">/api/admin/slack-config</Td><Td>Aggiorna config Slack. Body: {'{"webhook_url", "channel"}'}. Salva in alerting_rules.yaml. Rate limit: 10/hour.</Td></tr>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/admin/test-slack</Td><Td>Testa webhook Slack con messaggio test. Rate limit: 10/hour.</Td></tr>
+            <tr><Td><Badge color="blue">POST</Badge></Td><Td className="font-mono">/api/admin/trigger-digest</Td><Td>Trigger manuale daily digest (per test). Rate limit: 10/hour.</Td></tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Admin - Alerting Rules <Badge color="blue">Phase 4</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Method</Th><Th>Endpoint</Th><Th>Descrizione</Th></tr></thead>
+          <tbody>
+            <tr><Td><Badge color="green">GET</Badge></Td><Td className="font-mono">/api/admin/alerting-rules</Td><Td>Current alerting rules as JSON. Rate limit: 60/min.</Td></tr>
+            <tr><Td><Badge color="orange">PUT</Badge></Td><Td className="font-mono">/api/admin/alerting-rules</Td><Td>Update rules, valida, persiste YAML, reload config. Rate limit: 10/hour.</Td></tr>
           </tbody>
         </table>
 
