@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Minus, GitBranch } from 'lucide-react'
+import { ArrowDown, ArrowUp, Minus, GitBranch, AlertTriangle, TrendingUp } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card'
 import { TriageBadge } from '../ui/Badge'
 import { formatCurrency } from '../../lib/utils'
@@ -105,7 +105,100 @@ export function TriageSection({ alert }: TriageSectionProps) {
             </tbody>
           </table>
         </div>
+        {/* A6 Coverage-Zero Cause */}
+        {alert.alert_rule === 'A6' && alert.coverage_zero_cause && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={20} className="mt-0.5 text-amber-600" />
+              <div className="flex-1">
+                <h4 className="font-medium text-amber-900 mb-2">
+                  Probable Cause: {getCoverageZeroCauseLabel(alert.coverage_zero_cause)}
+                </h4>
+                <p className="text-sm text-amber-800">
+                  {getCoverageZeroCauseDescription(alert.coverage_zero_cause)}
+                </p>
+                {alert.coverage_zero_metrics && (
+                  <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Current Coverage:</span>
+                      <span className="ml-2 font-semibold text-red-600">
+                        {(alert.coverage_zero_metrics.current_coverage * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Baseline Coverage:</span>
+                      <span className="ml-2 font-semibold">
+                        {(alert.coverage_zero_metrics.baseline_coverage * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* A7 Pricing Rule Correlation */}
+        {alert.alert_rule === 'A7' && alert.pricing_rule_metrics && (
+          <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-4">
+            <div className="flex items-start gap-3">
+              <TrendingUp size={20} className="mt-0.5 text-purple-600" />
+              <div className="flex-1">
+                <h4 className="font-medium text-purple-900 mb-2">
+                  Pricing Rule Issue Detected
+                </h4>
+                <p className="text-sm text-purple-800 mb-3">
+                  Coverage is dropping while CPM is spiking &mdash; indicates floor prices are too high and blocking valid demand.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-gray-600 mb-1">Coverage Change</div>
+                    <div className="text-lg font-semibold text-red-600">
+                      {alert.pricing_rule_metrics.coverage_delta_pct.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {(alert.pricing_rule_metrics.baseline_coverage * 100).toFixed(1)}% &rarr; {(alert.pricing_rule_metrics.current_coverage * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-600 mb-1">CPM Change</div>
+                    <div className="text-lg font-semibold text-green-600">
+                      +{alert.pricing_rule_metrics.ecpm_delta_pct.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      &euro;{alert.pricing_rule_metrics.baseline_ecpm.toFixed(2)} &rarr; &euro;{alert.pricing_rule_metrics.current_ecpm.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-purple-200 pt-3 text-sm">
+                  <span className="text-gray-600">Inverse Correlation Score:</span>
+                  <span className="font-semibold">{alert.pricing_rule_metrics.correlation_score.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
+}
+
+function getCoverageZeroCauseLabel(cause: string): string {
+  const labels: Record<string, string> = {
+    GOOGLE_POLICY: 'Google Policy Violation',
+    MCM_CONFIG: 'MCM Misconfiguration',
+    ADS_TXT: 'Ads.txt Issue',
+    TECHNICAL_ISSUE: 'Technical Issue',
+  }
+  return labels[cause] || cause
+}
+
+function getCoverageZeroCauseDescription(cause: string): string {
+  const descriptions: Record<string, string> = {
+    GOOGLE_POLICY: 'Sudden coverage drop to zero with stable bacino suggests a Google policy violation. Check Ad Manager for policy warnings or account suspensions.',
+    MCM_CONFIG: 'Coverage at zero despite available bacino indicates MCM configuration issues. Verify publisher linking, revenue share settings, and inventory access.',
+    ADS_TXT: 'Coverage zero with bacino changes suggests ads.txt validation failures. Check ads.txt file for missing or incorrect seller entries.',
+    TECHNICAL_ISSUE: 'Coverage outage appears technical in nature. Check ad tag implementation, network connectivity, and integration logs.',
+  }
+  return descriptions[cause] || 'Unknown cause - manual investigation required.'
 }
