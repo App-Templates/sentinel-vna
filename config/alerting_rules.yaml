@@ -173,3 +173,10 @@ data_sources:
 notifications:
   slack_enabled: true
   email_enabled: true
+
+slack_notifications:
+  webhook_url: ""  # Populated via admin UI
+  channel: "sentinel-alerts"
+  immediate_severities: ["P0"]
+  digest_severities: ["P1", "P2"]
+  digest_time_utc: "08:00"  # Daily digest sent at 8 AM UTC
