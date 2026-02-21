@@ -54,7 +54,7 @@ function CodeBlock({ children }: { children: string }) {
 // Operational Tab
 // ---------------------------------------------------------------------------
 
-const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'comparative', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq', 'operator-workflow-feedback', 'operator-workflow-assignment', 'operator-workflow-intervention']
+const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'comparative', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq', 'operator-workflow-feedback', 'operator-workflow-assignment', 'operator-workflow-intervention', 'slack-notifications']
 
 function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; toggle: (id: string) => void }) {
   return (
@@ -643,6 +643,96 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
             <li><strong>Link to Alert:</strong> Salva intervento E collegalo all'alert corrente</li>
           </ul>
         </div>
+      </Section>
+
+      {/* SLACK NOTIFICATIONS */}
+      <Section id="slack-notifications" icon={Zap} title="Notifiche Slack" open={openSections.has('slack-notifications')} onToggle={toggle}>
+        <p className="mb-4">
+          Gli alert arrivano su Slack con livello di dettaglio calibrato sulla severity, evitando che gli operatori debbano controllare la dashboard proattivamente.
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Routing per Severity:</h4>
+        <table className="mb-4 w-full border-collapse">
+          <thead>
+            <tr>
+              <Th>Severity</Th>
+              <Th>Routing</Th>
+              <Th>Dettaglio</Th>
+              <Th>Quando</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <Td><Badge color="red">P0</Badge></Td>
+              <Td>Immediato</Td>
+              <Td>Report completo (contributors, geo, env, azioni suggerite)</Td>
+              <Td>Subito dopo generazione alert</Td>
+            </tr>
+            <tr>
+              <Td><Badge color="orange">P1</Badge></Td>
+              <Td>Daily Digest</Td>
+              <Td>Dettaglio medio (revenue, triage, top 3 contributors)</Td>
+              <Td>Digest giornaliero ore 08:00 UTC</Td>
+            </tr>
+            <tr>
+              <Td><Badge color="yellow">P2</Badge></Td>
+              <Td>Daily Digest</Td>
+              <Td>Compatto (una riga con link dashboard)</Td>
+              <Td>Digest giornaliero ore 08:00 UTC</Td>
+            </tr>
+            <tr>
+              <Td><Badge color="yellow">P2-WATCH</Badge></Td>
+              <Td>Daily Digest</Td>
+              <Td>Compatto (una riga con link dashboard)</Td>
+              <Td>Digest giornaliero ore 08:00 UTC</Td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Template Block Kit:</h4>
+        <ul className="list-disc space-y-2 pl-5 mb-4">
+          <li>
+            <strong>P0 Full:</strong> Header rosso + revenue status + triage + top 5 contributors + geo breakdown + env breakdown + azioni suggerite + link alert detail
+          </li>
+          <li>
+            <strong>P1 Medium:</strong> Header arancione + revenue status + triage + top 3 contributors + link alert detail
+          </li>
+          <li>
+            <strong>P2 Compact:</strong> Header giallo + revenue delta + triage label + link alert detail
+          </li>
+        </ul>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Configurazione:</h4>
+        <p className="mb-2">Gli admin configurano il webhook Slack dalla pagina /admin:</p>
+        <ol className="list-decimal space-y-1 pl-5 mb-4">
+          <li>Crea un webhook Slack nel workspace Adkaora</li>
+          <li>Inserisci webhook URL e channel name in Admin &gt; Slack Configuration</li>
+          <li>Testa la connessione con il pulsante "Test Connection"</li>
+          <li>Salva la configurazione (salvata in alerting_rules.yaml)</li>
+        </ol>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Daily Digest:</h4>
+        <ul className="list-disc space-y-1 pl-5 mb-4">
+          <li>Job schedulato alle 08:00 UTC ogni giorno</li>
+          <li>Raccoglie tutti gli alert P1/P2/P2-WATCH generati nelle ultime 24h</li>
+          <li>Invia un singolo messaggio Slack con riepilogo</li>
+          <li>Se nessun alert nelle ultime 24h, il digest non viene inviato</li>
+          <li>Endpoint manuale: <code className="rounded bg-gray-100 px-1 text-xs">POST /api/admin/trigger-digest</code> (per test o invio on-demand)</li>
+        </ul>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Delivery Status:</h4>
+        <p className="mb-2">Gli alert mostrano delivery_status nel database:</p>
+        <ul className="list-disc space-y-1 pl-5 mb-4">
+          <li><code className="rounded bg-gray-100 px-1 text-xs">slack_sent</code>: Notifica immediata inviata con successo</li>
+          <li><code className="rounded bg-gray-100 px-1 text-xs">slack_queued</code>: In coda per daily digest</li>
+          <li><code className="rounded bg-gray-100 px-1 text-xs">pending</code>: Non ancora processato</li>
+          <li><code className="rounded bg-gray-100 px-1 text-xs">failed</code>: Invio fallito (webhook non configurato o errore Slack)</li>
+        </ul>
+
+        <h4 className="mb-2 font-semibold text-gray-900">Retry Logic:</h4>
+        <p>
+          Le notifiche immediate (P0) hanno retry automatico con exponential backoff (max 3 tentativi). Le notifiche digest non hanno retry (se il digest fallisce, gli alert restano in pending_notifications).
+        </p>
       </Section>
     </>
   )
