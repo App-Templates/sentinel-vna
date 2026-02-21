@@ -30,17 +30,29 @@ from backend.api.schemas import (
     FeedbackResponse,
     FeedbackHistoryResponse,
     HealthResponse,
+    InterventionLinkRequest,
+    InterventionRequest,
+    InterventionResponse,
     RecheckRequest,
     RecheckResponse,
     ResolveRequest,
     SuccessResponse,
 )
 from backend.backtest.runner import BacktestRunner
-from backend.db.models import AlertAssignmentModel, AlertFeedbackModel, AlertStatus, EventType, FeedbackCategory
+from backend.db.models import (
+    AlertAssignmentModel,
+    AlertFeedbackModel,
+    AlertStatus,
+    EventType,
+    FeedbackCategory,
+    InterventionType,
+    ManualInterventionModel,
+)
 from backend.db.operations import (
     assign_alert,
     create_event,
     create_feedback,
+    create_intervention,
     create_recheck,
     get_alert_assignment,
     get_alert_by_id,
@@ -48,8 +60,10 @@ from backend.db.operations import (
     get_all_backtest_results,
     get_backtest_result,
     get_feedbacks_for_alert,
+    get_interventions_for_alert,
     get_pipeline_metrics,
     get_publisher_feedback_history,
+    link_intervention_to_alert,
     save_backtest_result,
     unassign_alert,
     update_alert_status,
@@ -131,6 +145,9 @@ def get_alert(request: Request, alert_id: str):
     events_raw = data.pop("events", [])
     events = [AlertEvent(**e) for e in events_raw]
 
+    # Get linked interventions
+    interventions = get_interventions_for_alert(alert_id)
+
     # Parse JSON blob fields into proper objects
     for json_field, obj_field in [
         ("contributors_json", "contributors"),
@@ -144,7 +161,7 @@ def get_alert(request: Request, alert_id: str):
         except (json.JSONDecodeError, TypeError):
             data[obj_field] = [] if obj_field in ("contributors", "geo_breakdown") else {}
 
-    alert = AlertDetail(**data, events=events)
+    alert = AlertDetail(**data, events=events, interventions=interventions)
     return AlertDetailResponse(alert=alert)
 
 
@@ -386,6 +403,120 @@ async def get_publisher_history(
         feedbacks=[FeedbackResponse(**f) for f in feedbacks],
         total=len(feedbacks)
     )
+
+
+# ---------------------------------------------------------------------------
+# Manual Interventions
+# ---------------------------------------------------------------------------
+
+@router.post("/interventions")
+@limiter.limit("30/minute")
+async def create_manual_intervention(body: InterventionRequest, request: Request):
+    """Create a manual intervention record (pricing rule, floor CPM, etc)."""
+    user = await require_auth(request)
+    user_id = user["email"]
+
+    # Validate intervention_type against InterventionType enum
+    try:
+        intervention_type = InterventionType(body.intervention_type)
+    except ValueError:
+        valid_types = [e.value for e in InterventionType]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid intervention_type. Must be one of: {', '.join(valid_types)}"
+        )
+
+    # Parse timestamp string to datetime
+    try:
+        timestamp = datetime.fromisoformat(body.timestamp.replace('Z', '+00:00'))
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=400, detail="Invalid timestamp format. Use ISO 8601 format.")
+
+    # Create intervention model
+    intervention = ManualInterventionModel(
+        timestamp=timestamp,
+        publisher_id=body.publisher_id,
+        intervention_type=intervention_type,
+        description=body.description,
+        value_before=body.value_before,
+        value_after=body.value_after,
+        user_id=user_id,
+    )
+
+    intervention_id = create_intervention(intervention)
+
+    logger.info(
+        "Manual intervention created: id=%d, type=%s, publisher=%s, user=%s",
+        intervention_id, intervention_type.value, body.publisher_id, user_id
+    )
+    return {"success": True, "intervention_id": intervention_id}
+
+
+@router.post("/alerts/{alert_id}/link-intervention")
+@limiter.limit("30/minute")
+async def link_intervention(alert_id: str, body: InterventionLinkRequest, request: Request):
+    """Link an existing intervention to an alert."""
+    user = await require_auth(request)
+    user_id = user["email"]
+
+    # Validate alert exists
+    alert_data = get_alert_by_id(alert_id)
+    if alert_data is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Validate intervention exists
+    from backend.db.operations import get_db
+    with get_db() as conn:
+        intervention_row = conn.execute(
+            "SELECT intervention_id FROM manual_interventions WHERE intervention_id = ?",
+            (body.intervention_id,)
+        ).fetchone()
+        if intervention_row is None:
+            raise HTTPException(status_code=404, detail="Intervention not found")
+
+    # Create link
+    link_id = link_intervention_to_alert(alert_id, body.intervention_id, user_id)
+
+    logger.info(
+        "Intervention %d linked to alert %s by %s",
+        body.intervention_id, alert_id, user_id
+    )
+    return {"success": True, "link_id": link_id}
+
+
+@router.get("/publishers/{publisher_id}/interventions")
+@limiter.limit("60/minute")
+async def get_publisher_interventions(
+    publisher_id: str,
+    request: Request,
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get interventions for a publisher with optional date filtering."""
+    from backend.db.operations import get_db
+
+    params = [publisher_id]
+    query = "SELECT * FROM manual_interventions WHERE publisher_id = ?"
+
+    if date_from:
+        query += " AND timestamp >= ?"
+        params.append(date_from)
+    if date_to:
+        query += " AND timestamp <= ?"
+        params.append(date_to)
+
+    query += " ORDER BY timestamp DESC LIMIT ?"
+    params.append(limit)
+
+    with get_db() as conn:
+        rows = conn.execute(query, params).fetchall()
+        interventions = [dict(r) for r in rows]
+
+    return {
+        "interventions": [InterventionResponse(**i) for i in interventions],
+        "total": len(interventions)
+    }
 
 
 # ---------------------------------------------------------------------------

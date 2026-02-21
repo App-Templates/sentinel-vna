@@ -82,6 +82,7 @@ class AlertDetail(BaseModel):
     updated_at: str
     events: list[AlertEvent] = []
     assignment: Optional[dict] = None
+    interventions: list = []
 
 
 class AlertListResponse(BaseModel):
@@ -194,3 +195,32 @@ class AssignmentResponse(BaseModel):
     assigned_to: str
     assigned_by: str
     assigned_at: str
+
+
+# ---------------------------------------------------------------------------
+# Intervention schemas
+# ---------------------------------------------------------------------------
+
+class InterventionRequest(BaseModel):
+    timestamp: str  # ISO format datetime string
+    publisher_id: str
+    intervention_type: str  # Must match InterventionType enum values
+    description: str = Field(..., max_length=500)
+    value_before: Optional[str] = None
+    value_after: Optional[str] = None
+
+
+class InterventionResponse(BaseModel):
+    intervention_id: int
+    timestamp: str
+    publisher_id: str
+    intervention_type: str
+    description: str
+    value_before: Optional[str] = None
+    value_after: Optional[str] = None
+    user_id: str
+    created_at: str
+
+
+class InterventionLinkRequest(BaseModel):
+    intervention_id: int
