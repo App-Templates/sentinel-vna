@@ -92,10 +92,12 @@ Plans:
   1. Gli alert P0 generano una notifica Slack immediata sul canale dedicato SENTINEL con report completo (contributors, geo, azioni suggerite)
   2. Gli alert P1 e P2 vengono raggruppati in un riepilogo giornaliero inviato su Slack a orario configurabile
   3. Il template della notifica e configurabile per severity (P0=report completo, P2=una riga con link alla dashboard)
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Slack configuration (webhook URL, channel, test connection in admin UI)
+- [ ] 04-02-PLAN.md — Severity-based templates and routing (P0 immediate, P1/P2 digest queue)
+- [ ] 04-03-PLAN.md — Daily digest scheduler (CronTrigger job + manual trigger endpoint)
 
 ### Phase 5: Dati Live e Multi-canale
 **Goal**: SENTINEL si connette a dati reali via Athena con refresh orario, monitora tutti i canali di vendita, e usa CTR/Viewability come indicatori predittivi
