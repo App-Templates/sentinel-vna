@@ -28,6 +28,9 @@ export interface Alert {
   created_at: string;
   updated_at: string;
   events: AlertEvent[];
+  drift_regression?: DriftRegression;
+  yesterday_comparison?: YesterdayComparison;
+  moving_average_14d?: MovingAverage14d;
 }
 
 export interface AlertSummary {
@@ -77,6 +80,31 @@ export interface AlertInsights {
   insights: string[];
   next_steps: string[];
   cache_warning: string;
+}
+
+export interface DriftRegression {
+  slope_pct_per_day: number;
+  cumulative_drop_pct: number;
+  r_squared: number;
+  days_analyzed: number;
+  projection_7d_pct: number;
+}
+
+export interface YesterdayComparison {
+  same_hours_revenue_yesterday: number;
+  current_hour_revenue: number;
+  delta_pct: number;
+  triggered: boolean;
+  severity: string;
+}
+
+export interface MovingAverage14d {
+  avg_revenue_14d: number;
+  current_revenue: number;
+  delta_pct: number;
+  divergence_hours: number;
+  triggered: boolean;
+  severity: string;
 }
 
 export interface AlertEvent {
