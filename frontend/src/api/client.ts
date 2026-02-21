@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Alert, AlertSummary, MetricDataPoint, HealthStatus, BacktestResult } from '../types/alert'
+import type { Alert, AlertSummary, MetricDataPoint, HealthStatus, BacktestResult, FeedbackType, InterventionType } from '../types/alert'
 import type { PublisherSummary, PublisherDetail, EcpmAnalysis, RecurringPatternsResponse } from '../types/publisher'
 
 const BASE_URL = '/api'
@@ -50,6 +50,7 @@ export interface AlertFilters {
   triage_label?: string
   from_date?: string
   to_date?: string
+  assigned_to?: string
 }
 
 interface AlertsResponse {
@@ -330,5 +331,113 @@ export function useUpdateAlertingRules() {
     mutationFn: (rules: Record<string, unknown>) =>
       fetchJSON('/admin/alerting-rules', { method: 'PUT', body: JSON.stringify(rules) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alerting-rules'] }),
+  })
+}
+
+// --- Operator Workflow Hooks (Phase 3) ---
+
+export function useSubmitFeedback() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ alertId, feedbackType, comment }: { alertId: string; feedbackType: FeedbackType; comment?: string }) => {
+      const res = await fetch(`${BASE_URL}/alerts/${alertId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ feedback_type: feedbackType, comment }),
+      })
+      if (!res.ok) throw new Error('Failed to submit feedback')
+      return res.json()
+    },
+    onSuccess: (_data, { alertId }) => {
+      queryClient.invalidateQueries({ queryKey: ['alert', alertId] })
+    },
+  })
+}
+
+export function useAssignAlert() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ alertId, assignedTo }: { alertId: string; assignedTo: string }) => {
+      const res = await fetch(`${BASE_URL}/alerts/${alertId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ assigned_to: assignedTo }),
+      })
+      if (!res.ok) throw new Error('Failed to assign alert')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alert'] })
+      queryClient.invalidateQueries({ queryKey: ['alerts'] })
+    },
+  })
+}
+
+export function useUnassignAlert() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (alertId: string) => {
+      const res = await fetch(`${BASE_URL}/alerts/${alertId}/assign`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed to unassign')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alert'] })
+      queryClient.invalidateQueries({ queryKey: ['alerts'] })
+    },
+  })
+}
+
+export function useCreateIntervention() {
+  return useMutation({
+    mutationFn: async (data: { timestamp: string; publisher_id: string; intervention_type: InterventionType; description: string; value_before?: string; value_after?: string }) => {
+      const res = await fetch(`${BASE_URL}/interventions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Failed to create intervention')
+      return res.json()
+    },
+  })
+}
+
+export function useLinkIntervention() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ alertId, interventionId }: { alertId: string; interventionId: number }) => {
+      const res = await fetch(`${BASE_URL}/alerts/${alertId}/link-intervention`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ intervention_id: interventionId }),
+      })
+      if (!res.ok) throw new Error('Failed to link intervention')
+      return res.json()
+    },
+    onSuccess: (_data, { alertId }) => {
+      queryClient.invalidateQueries({ queryKey: ['alert', alertId] })
+    },
+  })
+}
+
+export function usePublisherFeedbackHistory(publisherId?: string) {
+  return useQuery({
+    queryKey: ['publisher-feedback', publisherId],
+    queryFn: async () => {
+      if (!publisherId) return { feedbacks: [], total: 0 }
+      const res = await fetch(`${BASE_URL}/publishers/${publisherId}/feedback-history?limit=50`, {
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed to load feedback history')
+      return res.json()
+    },
+    enabled: !!publisherId,
   })
 }

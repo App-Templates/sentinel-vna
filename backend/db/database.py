@@ -11,9 +11,11 @@ from backend.db.models import (
     SQL_CREATE_ALERT_ASSIGNMENTS,
     SQL_CREATE_ALERT_EVENTS,
     SQL_CREATE_ALERT_FEEDBACK,
+    SQL_CREATE_ALERT_INTERVENTION_LINKS,
     SQL_CREATE_ALERTS,
     SQL_CREATE_BACKTEST_RESULTS,
     SQL_CREATE_INDEXES,
+    SQL_CREATE_MANUAL_INTERVENTIONS,
     SQL_CREATE_PIPELINE_RUNS,
     SQL_CREATE_RECHECK_QUEUE,
 )
@@ -109,6 +111,8 @@ def init_db(db_path: Optional[str] = None) -> None:
         conn.execute(SQL_CREATE_BACKTEST_RESULTS)
         conn.execute(SQL_CREATE_ALERT_FEEDBACK)
         conn.execute(SQL_CREATE_ALERT_ASSIGNMENTS)
+        conn.execute(SQL_CREATE_MANUAL_INTERVENTIONS)
+        conn.execute(SQL_CREATE_ALERT_INTERVENTION_LINKS)
         for idx_sql in SQL_CREATE_INDEXES:
             conn.execute(idx_sql)
         conn.commit()

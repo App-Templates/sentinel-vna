@@ -7,6 +7,51 @@ export type Environment = 'WEB' | 'AMP' | 'APP';
 export type GeoCluster = 'ITA' | 'ES' | 'OTHER';
 export type EventType = 'ACK' | 'RESOLVE' | 'RECHECK' | 'COMMENT';
 
+export type FeedbackType =
+  | 'REAL'
+  | 'FALSE_POSITIVE_MANUAL_INTERVENTION'
+  | 'FALSE_POSITIVE_SEASONALITY'
+  | 'FALSE_POSITIVE_TECHNICAL'
+  | 'FALSE_POSITIVE_PUBLISHER_CAMPAIGN'
+  | 'FALSE_POSITIVE_MARKET_NOISE';
+
+export interface Feedback {
+  feedback_id: number;
+  alert_id: string;
+  user_id: string;
+  feedback_type: FeedbackType;
+  comment?: string;
+  timestamp: string;
+}
+
+export interface Assignment {
+  assignment_id: number;
+  alert_id: string;
+  assigned_to: string;
+  assigned_by: string;
+  assigned_at: string;
+}
+
+export type InterventionType =
+  | 'PRICING_RULE'
+  | 'FLOOR_CPM'
+  | 'DEMAND_PARTNER_CONFIG'
+  | 'AD_UNIT_SETUP'
+  | 'POLICY_CHANGE'
+  | 'OTHER';
+
+export interface Intervention {
+  intervention_id: number;
+  timestamp: string;
+  publisher_id: string;
+  intervention_type: InterventionType;
+  description: string;
+  value_before?: string;
+  value_after?: string;
+  user_id: string;
+  created_at: string;
+}
+
 export interface Alert {
   alert_id: string;
   timestamp: string;
@@ -37,6 +82,11 @@ export interface Alert {
   coverage_zero_metrics?: CoverageZeroMetrics;
   coverage_zero_cause?: CoverageZeroCause;
   pricing_rule_metrics?: PricingRuleMetrics;
+
+  // Phase 3 fields (operator workflow)
+  feedbacks?: Feedback[];
+  assignment?: Assignment;
+  interventions?: Intervention[];
 }
 
 export type CoverageZeroCause = 'GOOGLE_POLICY' | 'MCM_CONFIG' | 'ADS_TXT' | 'TECHNICAL_ISSUE';

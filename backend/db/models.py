@@ -50,6 +50,15 @@ class FeedbackCategory(str, Enum):
     FALSE_POSITIVE_MARKET_NOISE = "FALSE_POSITIVE_MARKET_NOISE"
 
 
+class InterventionType(str, Enum):
+    PRICING_RULE = "PRICING_RULE"
+    FLOOR_CPM = "FLOOR_CPM"
+    DEMAND_PARTNER_CONFIG = "DEMAND_PARTNER_CONFIG"
+    AD_UNIT_SETUP = "AD_UNIT_SETUP"
+    POLICY_CHANGE = "POLICY_CHANGE"
+    OTHER = "OTHER"
+
+
 class RecheckStatus(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
@@ -138,6 +147,18 @@ class AlertAssignmentModel(BaseModel):
     assigned_to: str
     assigned_by: str
     assigned_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ManualInterventionModel(BaseModel):
+    intervention_id: Optional[int] = None
+    timestamp: datetime
+    publisher_id: str
+    intervention_type: InterventionType
+    description: str
+    value_before: Optional[str] = None
+    value_after: Optional[str] = None
+    user_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 def generate_alert_id(severity: Severity, ts: Optional[datetime] = None) -> str:
@@ -258,6 +279,38 @@ CREATE TABLE IF NOT EXISTS alert_assignments (
 );
 """
 
+SQL_CREATE_MANUAL_INTERVENTIONS = """
+CREATE TABLE IF NOT EXISTS manual_interventions (
+    intervention_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    publisher_id TEXT NOT NULL,
+    intervention_type TEXT NOT NULL CHECK(intervention_type IN (
+        'PRICING_RULE',
+        'FLOOR_CPM',
+        'DEMAND_PARTNER_CONFIG',
+        'AD_UNIT_SETUP',
+        'POLICY_CHANGE',
+        'OTHER'
+    )),
+    description TEXT NOT NULL,
+    value_before TEXT,
+    value_after TEXT,
+    user_id TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+"""
+
+SQL_CREATE_ALERT_INTERVENTION_LINKS = """
+CREATE TABLE IF NOT EXISTS alert_intervention_links (
+    link_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_id TEXT NOT NULL,
+    intervention_id INTEGER NOT NULL,
+    linked_at TEXT NOT NULL,
+    FOREIGN KEY (alert_id) REFERENCES alerts(alert_id),
+    FOREIGN KEY (intervention_id) REFERENCES manual_interventions(intervention_id)
+);
+"""
+
 SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alerts(timestamp);",
     "CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);",
@@ -265,4 +318,7 @@ SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_pipeline_runs_created ON pipeline_runs(created_at);",
     "CREATE INDEX IF NOT EXISTS idx_feedback_publisher ON alert_feedback(publisher_id);",
     "CREATE INDEX IF NOT EXISTS idx_assignments_assigned_to ON alert_assignments(assigned_to);",
+    "CREATE INDEX IF NOT EXISTS idx_interventions_timestamp ON manual_interventions(timestamp);",
+    "CREATE INDEX IF NOT EXISTS idx_interventions_publisher ON manual_interventions(publisher_id);",
+    "CREATE INDEX IF NOT EXISTS idx_intervention_links_alert ON alert_intervention_links(alert_id);",
 ]
