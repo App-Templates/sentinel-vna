@@ -1,6 +1,6 @@
 export type Severity = 'P0' | 'P1' | 'P2';
 export type AlertStatus = 'OPEN' | 'ACK' | 'RESOLVED' | 'SNOOZED';
-export type AlertRule = 'A0' | 'A1' | 'A2' | 'A3';
+export type AlertRule = 'A0' | 'A1' | 'A2' | 'A3' | 'A5' | 'A6' | 'A7';
 export type ChannelGroup = 'GOOGLE' | 'OPEN_BIDDING';
 export type TriageLabel = 'TRAFFIC_DRIVEN' | 'COVERAGE_DRIVEN' | 'MIXED' | 'REVENUE_ONLY';
 export type Environment = 'WEB' | 'AMP' | 'APP';
@@ -31,6 +31,46 @@ export interface Alert {
   drift_regression?: DriftRegression;
   yesterday_comparison?: YesterdayComparison;
   moving_average_14d?: MovingAverage14d;
+
+  // Phase 2 fields (new alert types)
+  margin_metrics?: MarginMetrics;
+  coverage_zero_metrics?: CoverageZeroMetrics;
+  coverage_zero_cause?: CoverageZeroCause;
+  pricing_rule_metrics?: PricingRuleMetrics;
+}
+
+export type CoverageZeroCause = 'GOOGLE_POLICY' | 'MCM_CONFIG' | 'ADS_TXT' | 'TECHNICAL_ISSUE';
+
+export interface MarginMetrics {
+  current_ecpm: number;
+  baseline_ecpm: number;
+  ecpm_delta_pct: number;
+  current_impressions: number;
+  baseline_impressions: number;
+  severity: string;
+}
+
+export interface CoverageZeroMetrics {
+  current_coverage: number;
+  baseline_coverage: number;
+  current_impressions: number;
+  current_bacino: number;
+  baseline_impressions: number;
+  baseline_bacino: number;
+  severity: string;
+}
+
+export interface PricingRuleMetrics {
+  current_coverage: number;
+  baseline_coverage: number;
+  coverage_delta_pct: number;
+  current_ecpm: number;
+  baseline_ecpm: number;
+  ecpm_delta_pct: number;
+  correlation_score: number;
+  current_impressions: number;
+  baseline_impressions: number;
+  severity: string;
 }
 
 export interface AlertSummary {
