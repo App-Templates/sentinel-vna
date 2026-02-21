@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 2 - Nuovi Tipi Alert (next to plan)
+**Current focus:** Phase 2 - Nuovi Tipi Alert (executing)
 
 ## Current Position
 
 Phase: 2 of 6 (Nuovi Tipi Alert)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-21 — Phase 1 complete, Phase 6 added (Revisione Documentale)
+Plan: 1 of 4 in current phase
+Status: Executing
+Last activity: 2026-02-21 — Plan 02-01 (A5 Margin Alert) completed
 
-Progress: [██░░░░░░░░] 17%
+Progress: [███░░░░░░░] 21%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 0.3 hours
-- Total execution time: 1.25 hours
+- Total plans completed: 5
+- Average duration: 0.27 hours
+- Total execution time: 1.28 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 (Alerting Evoluto) | 4 | 1.25h | 0.31h |
+| 02 (Nuovi Tipi Alert) | 1 | 0.03h | 0.03h |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (0.5h), 01-03 (0.3h), 01-02 (0.2h), 01-04 (0.25h)
+- Last 5 plans: 01-03 (0.3h), 01-02 (0.2h), 01-04 (0.25h), 02-01 (0.03h)
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -60,6 +61,10 @@ Recent decisions affecting current work:
 - [01-04]: Dynamic step navigation shows 7-9 steps based on alert data availability
 - [01-04]: Drift visualization uses Recharts LineChart with reconstructed trend from slope
 - [01-04]: Comparative sections conditionally rendered only when data present
+- [02-01]: eCPM thresholds more lenient (-25%/-15%) than revenue thresholds due to higher eCPM volatility
+- [02-01]: min_impressions=1000 filter to prevent false positives from low-traffic hours
+- [02-01]: Dict-based threshold config for flexibility to add severity levels
+- [02-01]: Single-hour check initially; consecutive-hours verification deferred
 
 ### Pending Todos
 
@@ -77,5 +82,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Plan 01-04 completed and committed (human verification pending)
-Resume file: .planning/phases/01-alerting-evoluto/01-04-SUMMARY.md
+Stopped at: Completed 02-01-PLAN.md (A5 Margin Alert)
+Resume file: .planning/phases/02-nuovi-tipi-alert/02-01-SUMMARY.md
