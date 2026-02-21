@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 2 of 6 (Nuovi Tipi Alert)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: Executing
-Last activity: 2026-02-21 — Plan 02-01 (A5 Margin Alert) completed
+Last activity: 2026-02-21 — Plan 02-02 (A6 Coverage-Zero Alert) completed
 
-Progress: [███░░░░░░░] 21%
+Progress: [████░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 0.27 hours
-- Total execution time: 1.28 hours
+- Total plans completed: 6
+- Average duration: 0.24 hours
+- Total execution time: 1.35 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 (Alerting Evoluto) | 4 | 1.25h | 0.31h |
-| 02 (Nuovi Tipi Alert) | 1 | 0.03h | 0.03h |
+| 02 (Nuovi Tipi Alert) | 2 | 0.10h | 0.05h |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (0.3h), 01-02 (0.2h), 01-04 (0.25h), 02-01 (0.03h)
+- Last 5 plans: 01-02 (0.2h), 01-04 (0.25h), 02-01 (0.03h), 02-02 (0.07h)
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -65,6 +65,10 @@ Recent decisions affecting current work:
 - [02-01]: min_impressions=1000 filter to prevent false positives from low-traffic hours
 - [02-01]: Dict-based threshold config for flexibility to add severity levels
 - [02-01]: Single-hour check initially; consecutive-hours verification deferred
+- [02-02]: Coverage threshold 0.001 (0.1%) catches near-zero, not just exactly 0
+- [02-02]: A6 always P1 severity — complete coverage loss = immediate revenue stop
+- [02-02]: Heuristic triage uses bacino stability + baseline coverage as classification signals
+- [02-02]: 4 coverage-zero causes: GOOGLE_POLICY, MCM_CONFIG, ADS_TXT, TECHNICAL_ISSUE
 
 ### Pending Todos
 
@@ -82,5 +86,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-01-PLAN.md (A5 Margin Alert)
-Resume file: .planning/phases/02-nuovi-tipi-alert/02-01-SUMMARY.md
+Stopped at: Completed 02-02-PLAN.md (A6 Coverage-Zero Alert)
+Resume file: .planning/phases/02-nuovi-tipi-alert/02-02-SUMMARY.md

@@ -118,7 +118,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Alerting Evoluto | 0/? | Complete    | 2026-02-21 |
-| 2. Nuovi Tipi Alert | 0/? | Not started | - |
+| 2. Nuovi Tipi Alert | 2/4 | In Progress|  |
 | 3. Operator Workflow | 0/? | Not started | - |
 | 4. Notifiche Slack | 0/? | Not started | - |
 | 5. Dati Live e Multi-canale | 0/? | Not started | - |
@@ -128,7 +128,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 
 **Goal:** Tutta la documentazione in-app (tecnica e operativa) riflette accuratamente le nuove regole, soglie, alert types e workflow introdotti nelle fasi 1-5
 **Depends on:** Phase 5
-**Plans:** 0 plans
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 6 to break down)
