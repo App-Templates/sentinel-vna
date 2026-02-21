@@ -54,7 +54,7 @@ function CodeBlock({ children }: { children: string }) {
 // Operational Tab
 // ---------------------------------------------------------------------------
 
-const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'comparative', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq']
+const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'comparative', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq', 'operator-workflow-feedback', 'operator-workflow-assignment', 'operator-workflow-intervention']
 
 function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; toggle: (id: string) => void }) {
   return (
@@ -538,6 +538,100 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
             A differenza di altri pattern che possono essere stagionali, il doppio calo richiede sempre attenzione: verificare la
             competizione, contattare advertiser, valutare riduzione floor price.</p>
           </div>
+        </div>
+      </Section>
+
+      {/* OPERATOR WORKFLOW - FEEDBACK */}
+      <Section id="operator-workflow-feedback" icon={Users} title="Feedback e Apprendimento" open={openSections.has('operator-workflow-feedback')} onToggle={toggle}>
+        <p className="mb-4">
+          Il sistema accumula conoscenza operativa tramite feedback degli operatori su ogni alert.
+        </p>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Categorie di Feedback:</h4>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><strong>REAL:</strong> Alert confermato come reale anomalia</li>
+            <li><strong>FALSE_POSITIVE_MANUAL_INTERVENTION:</strong> Intervento manuale noto (es. cambio floor price)</li>
+            <li><strong>FALSE_POSITIVE_SEASONALITY:</strong> Variazione stagionale attesa (es. festività)</li>
+            <li><strong>FALSE_POSITIVE_TECHNICAL:</strong> Problema tecnico temporaneo (es. tag rotto poi fixato)</li>
+            <li><strong>FALSE_POSITIVE_PUBLISHER_CAMPAIGN:</strong> Campagna publisher nota (es. test A/B)</li>
+            <li><strong>FALSE_POSITIVE_MARKET_NOISE:</strong> Rumore di mercato normale</li>
+          </ul>
+        </div>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Storico Publisher:</h4>
+          <p>
+            Quando visualizzi un alert, il sistema mostra lo storico dei feedback precedenti sullo stesso publisher,
+            permettendo di riconoscere pattern ricorrenti.
+          </p>
+        </div>
+        <div className="rounded-lg bg-blue-50 p-3">
+          <p className="text-sm text-blue-800">
+            <strong>Come usare:</strong> Nel dettaglio alert, scegli la categoria appropriata dal pannello Feedback,
+            aggiungi commento opzionale, e salva. Il feedback è visibile a tutto il team.
+          </p>
+        </div>
+      </Section>
+
+      {/* OPERATOR WORKFLOW - ASSIGNMENT */}
+      <Section id="operator-workflow-assignment" icon={Users} title="Assegnazione Alert" open={openSections.has('operator-workflow-assignment')} onToggle={toggle}>
+        <p className="mb-4">
+          Gli alert possono essere assegnati a membri del team per chiarire la responsabilità di investigazione.
+        </p>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Validazione Email:</h4>
+          <p>Solo indirizzi <strong>@adkaora.com</strong> sono accettati (validazione a livello database).</p>
+        </div>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Assegnazione:</h4>
+          <p>
+            Nel dettaglio alert, usa il dropdown Assignment in alto per selezionare un collega.
+            L'alert apparirà nella loro lista filtrata.
+          </p>
+        </div>
+        <div className="rounded-lg bg-blue-50 p-3">
+          <p className="text-sm text-blue-800">
+            <strong>Filtri Dashboard:</strong> La dashboard supporta filtro per assigned_to per vedere solo
+            alert assegnati a te o al tuo team.
+          </p>
+        </div>
+      </Section>
+
+      {/* OPERATOR WORKFLOW - INTERVENTION */}
+      <Section id="operator-workflow-intervention" icon={Settings} title="Tracking Interventi Manuali" open={openSections.has('operator-workflow-intervention')} onToggle={toggle}>
+        <p className="mb-4">
+          Registra interventi manuali (floor price, MCM, targeting changes) per escluderli dalla baseline futura e accumulare conoscenza.
+        </p>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Campi Richiesti:</h4>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><strong>Publisher:</strong> ID publisher interessato</li>
+            <li><strong>Tipo:</strong> FLOOR_PRICE_CHANGE, MCM_CONFIG, TARGETING_CHANGE, AD_UNIT_CHANGE, BLOCK_LIST, OTHER</li>
+            <li><strong>Timestamp:</strong> Data/ora intervento</li>
+            <li><strong>Valore prima/dopo:</strong> Opzionale ma raccomandato per floor price changes</li>
+            <li><strong>Motivo:</strong> Descrizione testuale (es. 'Floor price alzato da 0.50 a 1.20 per aumentare margin')</li>
+          </ul>
+        </div>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Baseline Exclusion:</h4>
+          <p>
+            Quando registri un intervento, l'intera ora di quel timestamp viene esclusa dal calcolo baseline degli alert futuri,
+            prevenendo falsi positivi.
+          </p>
+        </div>
+        <div className="mb-4">
+          <h4 className="mb-2 font-semibold text-gray-900">Collegamento Alert:</h4>
+          <p>
+            Puoi collegare un intervento a un alert specifico per tracciare quali alert hanno portato ad azioni correttive.
+          </p>
+        </div>
+        <div className="rounded-lg bg-blue-50 p-3">
+          <p className="text-sm text-blue-800 mb-2">
+            <strong>Due Modalità di Salvataggio:</strong>
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-blue-800">
+            <li><strong>Quick Log:</strong> Salva intervento indipendente (non collegato a nessun alert)</li>
+            <li><strong>Link to Alert:</strong> Salva intervento E collegalo all'alert corrente</li>
+          </ul>
         </div>
       </Section>
     </>
