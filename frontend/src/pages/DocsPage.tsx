@@ -1596,13 +1596,14 @@ top_publishers:         # 36 publisher monitorati
       {/* SCHEDULING */}
       <Section id="scheduling" icon={Clock} title="Scheduling e Monitoring" open={openSections.has('scheduling')} onToggle={toggle}>
         <h4 className="mb-2 font-semibold text-gray-900">APScheduler (AsyncIO)</h4>
-        <p className="mb-3">Tre job schedulati in-process:</p>
+        <p className="mb-3">Quattro job schedulati in-process:</p>
         <table className="mb-4 w-full border-collapse text-xs">
           <thead><tr><Th>Job</Th><Th>Intervallo</Th><Th>Funzione</Th><Th>Descrizione</Th></tr></thead>
           <tbody>
             <tr><Td className="font-mono">alerting_cycle</Td><Td>2 ore</Td><Td className="font-mono text-xs">run_alerting_cycle()</Td><Td>Esegue A1+A3 pipeline per GOOGLE + OPEN_BIDDING</Td></tr>
             <tr><Td className="font-mono">drift_cycle</Td><Td>6 ore</Td><Td className="font-mono text-xs">run_drift_cycle()</Td><Td>Esegue A2 drift detection per GOOGLE + OPEN_BIDDING</Td></tr>
             <tr><Td className="font-mono">recheck_queue</Td><Td>5 min</Td><Td className="font-mono text-xs">check_recheck_queue()</Td><Td>Processa recheck in coda (PENDING → COMPLETED/FAILED)</Td></tr>
+            <tr><Td className="font-mono">daily_slack_digest</Td><Td>CronTrigger (08:00 UTC daily)</Td><Td className="font-mono text-xs">send_daily_digest()</Td><Td>Raccoglie alert P1/P2/P2-WATCH generati nelle ultime 24h, invia digest Slack unico, marca pending_notifications come sent. Skip se nessun alert. Endpoint manuale: <code className="rounded bg-gray-100 px-1 text-xs">POST /api/admin/trigger-digest</code></Td></tr>
           </tbody>
         </table>
 
