@@ -213,7 +213,7 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
         <div className="space-y-3">
           {[
             { n: 1, name: 'Orchestrator', d: 'Prepara contesto: canale, timestamp, trigger type.' },
-            { n: 2, name: 'Data Fetcher', d: 'Recupera dati (Athena → GAM → Parquet fallback chain), calcola baseline 7 settimane e delta. Cache con TTL.' },
+            { n: 2, name: 'Data Fetcher', d: 'Recupera dati (Athena → GAM → Parquet fallback chain), calcola baseline 7 settimane e delta. Esclude periodi con interventi manuali registrati. Cache con TTL.' },
             { n: 3, name: 'Data Validator', d: 'Verifica qualita\' dati: completezza, coerenza, outlier. Se dati mancanti > 4h, genera alert A0.' },
             { n: 4, name: 'Anomaly Detector', d: 'Applica regole A1/A2/A3 con check ore consecutive, Z-scores (sample std N-1), assegna severity. A0 bypassa questo step. Optional: Claude Haiku.' },
             { n: 5, name: 'Triage Classifier', d: 'Classifica causa: TRAFFIC/COVERAGE/MIXED/REVENUE_ONLY.' },
@@ -232,6 +232,13 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
         </div>
         <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
           6a/6b/6c girano in parallelo (state keys diverse, nessuna dipendenza). Riduce latenza pipeline. Nota: alert A0 (data gap) bypassano triage e analisi, saltano direttamente a report_builder.
+        </div>
+        <div className="mt-4 rounded-lg bg-blue-50 p-3">
+          <p className="text-sm text-blue-800">
+            <strong>Operator Feedback Loop (Phase 3):</strong> Dopo l'alert, operatori possono fornire feedback
+            (REAL vs FALSE_POSITIVE variants), assegnare a colleghi, e registrare interventi manuali. Gli interventi
+            vengono esclusi dalla baseline futura per prevenire alert ricorrenti su variazioni note.
+          </p>
         </div>
       </Section>
 
