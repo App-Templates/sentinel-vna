@@ -39,6 +39,19 @@ class DriftRegressionConfig(BaseModel):
     min_data_points: int
 
 
+class DualThresholdLevelConfig(BaseModel):
+    revenue_drop_percent: float
+    yesterday_delta_percent: float
+    ma_14d_divergence_percent: float
+
+
+class DualThresholdsConfig(BaseModel):
+    enabled: bool
+    operational: DualThresholdLevelConfig
+    attention: DualThresholdLevelConfig
+    attention_severity: str
+
+
 class NearZeroConfig(BaseModel):
     revenue_threshold_eur: float
     coverage_threshold: float
@@ -55,10 +68,17 @@ class TopContributorsConfig(BaseModel):
     min_quota_percent: float
 
 
+class WeekendScheduleConfig(BaseModel):
+    enabled: bool
+    times_per_day: int
+    run_hours: list[int]
+
+
 class SchedulingConfig(BaseModel):
     interval_hours: int
     recheck_interval_minutes: int
     channels: list[str]
+    weekend_schedule: WeekendScheduleConfig
 
     @field_validator("channels")
     @classmethod
@@ -88,6 +108,7 @@ class AlertingConfig(BaseModel):
     revenue_anomaly: RevenueAnomalyConfig
     drift_detection: DriftDetectionConfig
     drift_regression: DriftRegressionConfig
+    dual_thresholds: DualThresholdsConfig
     near_zero: NearZeroConfig
     triage: TriageConfig
     top_contributors: TopContributorsConfig
