@@ -114,7 +114,7 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
       </Section>
 
       {/* SEVERITY */}
-      <Section id="severity" icon={TrendingDown} title="Livelli di Severity (P0, P1, P2)" open={openSections.has('severity')} onToggle={toggle}>
+      <Section id="severity" icon={TrendingDown} title="Livelli di Severity (P0, P1, P2, P2-WATCH)" open={openSections.has('severity')} onToggle={toggle}>
         <p className="mb-4">La severity determina priorita' e tempi di risposta. Assegnata dall'Anomaly Detector in base al delta % e al contesto temporale.</p>
         <table className="mb-4 w-full border-collapse">
           <thead><tr><Th>Severity</Th><Th>Soglia</Th><Th>Finestra</Th><Th>Significato</Th><Th>Azione</Th></tr></thead>
@@ -122,14 +122,17 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
             <tr><Td><Badge color="red">P0</Badge></Td><Td className="font-mono">&ge; -15%</Td><Td>2h consecutive</Td><Td>Calo grave, impatto significativo sui ricavi giornalieri</Td><Td>Investigare entro 30 min</Td></tr>
             <tr><Td><Badge color="orange">P1</Badge></Td><Td className="font-mono">&ge; -10%</Td><Td>2h consecutive</Td><Td>Calo importante, impatto rilevante se persiste</Td><Td>Investigare entro 2 ore</Td></tr>
             <tr><Td><Badge color="yellow">P2</Badge></Td><Td className="font-mono">&ge; -5%</Td><Td>4h consecutive</Td><Td>Calo moderato, possibilmente fisiologico</Td><Td>Monitorare, investigare se persiste</Td></tr>
+            <tr><Td><Badge color="blue">P2-WATCH</Badge></Td><Td className="font-mono">-15%</Td><Td>2h consecutive</Td><Td>Soglia di attenzione - richiede monitoraggio</Td><Td>Osservare, nessuna azione immediata</Td></tr>
           </tbody>
         </table>
+        <p className="mb-3 mt-4"><strong>Sistema a doppia soglia (Phase 1):</strong> Le regole A1/A2 usano soglie doppie: operativa (-30% per ieri, standard P0/P1/P2 per baseline) e attenzione (-15%). Gli alert sotto soglia operativa ma sopra soglia attenzione generano P2-WATCH.</p>
         <div className="space-y-2">
           <p><strong>Aggiustamenti contestuali:</strong></p>
           <ul className="list-disc space-y-1 pl-5">
             <li><strong>Off-peak (22-06):</strong> soglie rilassate 1.5x. Un -15% notturno diventa P1.</li>
             <li><strong>Weekend:</strong> soglie rilassate 1.2x.</li>
             <li><strong>Z-score &lt; 1.5 + off-peak:</strong> alert soppresso (probabile falso positivo).</li>
+            <li><strong>Dual thresholds:</strong> Comparative alerting applica soglie doppie per distinguere urgenze operative da segnali di attenzione.</li>
           </ul>
         </div>
       </Section>
