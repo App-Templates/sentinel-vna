@@ -364,6 +364,66 @@ def _calculate_drift_metrics(df_daily: pd.DataFrame, current_ts: datetime, chann
     }
 
 
+def _get_daily_channel_df() -> Optional[pd.DataFrame]:
+    """Accessor for daily channel cache (used by drift baseline fetcher)."""
+    return _load_daily_channel_data()
+
+
+def _fetch_drift_baseline(
+    timestamp: pd.Timestamp,
+    channel_group: str,
+    window_days: int,
+) -> Optional[pd.DataFrame]:
+    """
+    Fetch daily aggregated revenue for drift regression analysis.
+
+    Returns DataFrame with columns: date, revenue
+    Covers window_days before the given timestamp.
+    Uses daily_channel parquet for aggregation.
+
+    Args:
+        timestamp: End timestamp (exclusive - we go backwards from day before this)
+        channel_group: GOOGLE or OPEN_BIDDING
+        window_days: How many days to fetch (14-30 typically)
+
+    Returns:
+        DataFrame with daily revenue sums, or None if data insufficient
+    """
+    df = _get_daily_channel_df()
+    if df is None:
+        return None
+
+    # Convert timestamp to date, go back one day (we want historical baseline, not including current day)
+    end_date = timestamp.normalize() - timedelta(days=1)
+    start_date = end_date - timedelta(days=window_days - 1)
+
+    # Filter by channel and date range
+    mask = (
+        (df["channel_group"] == channel_group)
+        & (df["date"] >= start_date)
+        & (df["date"] <= end_date)
+    )
+    subset = df[mask].copy()
+
+    if subset.empty:
+        logger.warning(
+            "No drift baseline data for %s in range %s to %s",
+            channel_group, start_date, end_date,
+        )
+        return None
+
+    # Group by date and sum revenue across all publishers
+    daily = subset.groupby("date", as_index=False)["revenue"].sum()
+    daily = daily.sort_values("date")
+
+    logger.info(
+        "Fetched drift baseline: %d days, %.2f EUR total",
+        len(daily), daily["revenue"].sum(),
+    )
+
+    return daily
+
+
 def _get_active_source() -> str:
     """Read the active data source from datasource_config.json."""
     config_path = BASE_DIR / "data" / "datasource_config.json"
