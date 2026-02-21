@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 1 of 5 (Alerting Evoluto)
-Plan: 1 of ? in current phase
+Plan: 3 of ? in current phase
 Status: In progress
-Last activity: 2026-02-21 — Plan 01-01 completed (Linear Regression Drift Detection)
+Last activity: 2026-02-21 — Plan 01-03 completed (Weekend Scheduling & Dual Thresholds)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 0.5 hours
-- Total execution time: 0.5 hours
+- Total plans completed: 2
+- Average duration: 0.4 hours
+- Total execution time: 0.8 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 (Alerting Evoluto) | 1 | 0.5h | 0.5h |
+| 01 (Alerting Evoluto) | 2 | 0.8h | 0.4h |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (0.5h)
-- Trend: N/A (need 3+ plans)
+- Last 5 plans: 01-01 (0.5h), 01-03 (0.3h)
+- Trend: Accelerating (need 3+ plans for statistical trend)
 
 *Updated after each plan completion*
 
@@ -51,6 +51,9 @@ Recent decisions affecting current work:
 - [01-01]: Regression-first strategy for A2 (run regression before 7-day drift fallback)
 - [01-01]: Conservative statistical thresholds (R² ≥ 0.5, p < 0.05) to avoid false positives
 - [01-01]: Dynamic window selection (14-30 days) adapts to data availability
+- [01-03]: Weekend scheduling 2x/day (10:00, 18:00 UTC) balances coverage with reduced ops burden
+- [01-03]: Dual thresholds: operational (-30%) vs attention (-15%) to distinguish urgent vs monitoring alerts
+- [01-03]: P2-WATCH severity for attention-level alerts, distinct from operational P2
 
 ### Pending Todos
 
@@ -64,5 +67,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Plan 01-01 completed and committed
-Resume file: .planning/phases/01-alerting-evoluto/01-01-SUMMARY.md
+Stopped at: Plan 01-03 completed and committed
+Resume file: .planning/phases/01-alerting-evoluto/01-03-SUMMARY.md
