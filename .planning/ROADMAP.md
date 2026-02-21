@@ -39,11 +39,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. L'operatore vede il confronto revenue vs media ultimi 14 giorni, con alert quando le curve divergono significativamente
   4. SENTINEL genera alert anche nel weekend e nei festivi (scheduling ridotto, 2x/giorno)
   5. Le soglie sono calibrate su due livelli: alert operativo (30% deviazione) e alert di attenzione (5-15% deviazione)
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Linear regression drift detection (14-30 day window)
+- [ ] 01-02-PLAN.md — Yesterday and 14d moving average comparisons
+- [ ] 01-03-PLAN.md — Dual thresholds and weekend scheduling
+- [ ] 01-04-PLAN.md — Frontend visualization (drift charts, comparative metrics)
 
 ### Phase 2: Nuovi Tipi Alert
 **Goal**: SENTINEL rileva i tre pattern operativi critici che oggi non copre: margine sotto soglia, coverage azzerata, pricing rule errate — come nuove regole nel sistema A0-A3 esistente
