@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Generator, Optional
 
 from backend.db.models import (
+    SQL_CREATE_ALERT_ASSIGNMENTS,
     SQL_CREATE_ALERT_EVENTS,
     SQL_CREATE_ALERT_FEEDBACK,
     SQL_CREATE_ALERTS,
@@ -107,6 +108,7 @@ def init_db(db_path: Optional[str] = None) -> None:
         conn.execute(SQL_CREATE_PIPELINE_RUNS)
         conn.execute(SQL_CREATE_BACKTEST_RESULTS)
         conn.execute(SQL_CREATE_ALERT_FEEDBACK)
+        conn.execute(SQL_CREATE_ALERT_ASSIGNMENTS)
         for idx_sql in SQL_CREATE_INDEXES:
             conn.execute(idx_sql)
         conn.commit()

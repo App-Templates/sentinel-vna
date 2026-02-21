@@ -264,4 +264,5 @@ SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity);",
     "CREATE INDEX IF NOT EXISTS idx_pipeline_runs_created ON pipeline_runs(created_at);",
     "CREATE INDEX IF NOT EXISTS idx_feedback_publisher ON alert_feedback(publisher_id);",
+    "CREATE INDEX IF NOT EXISTS idx_assignments_assigned_to ON alert_assignments(assigned_to);",
 ]
