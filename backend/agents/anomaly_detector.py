@@ -334,6 +334,52 @@ def _calculate_zscore(current: float, baseline: float, std: float) -> float:
     return round((current - baseline) / std, 2)
 
 
+def _evaluate_dual_thresholds(
+    delta_pct: float,
+    comparison_type: str,  # "revenue_drop", "yesterday_delta", "ma_14d_divergence"
+    config,
+) -> tuple[bool, str]:
+    """
+    Evaluate delta against dual thresholds (operational vs attention).
+
+    Returns (triggered, severity):
+    - If below operational threshold: (True, P0/P1/P2 based on magnitude)
+    - If below attention threshold but above operational: (True, P2-WATCH)
+    - Otherwise: (False, NONE)
+    """
+    dt = config.dual_thresholds
+
+    if not dt.enabled:
+        # Fall back to single threshold (existing behavior)
+        # For backward compatibility, use operational threshold
+        operational_thresh = getattr(dt.operational, f"{comparison_type}_percent")
+        if delta_pct <= operational_thresh:
+            return (True, "P1")  # Default severity for single threshold
+        return (False, "NONE")
+
+    operational_thresh = getattr(dt.operational, f"{comparison_type}_percent")
+    attention_thresh = getattr(dt.attention, f"{comparison_type}_percent")
+
+    # Check operational threshold first (more severe)
+    if delta_pct <= operational_thresh:
+        # Operational alert — map to P0/P1/P2 based on magnitude
+        # Use existing severity mapping from A1 rules
+        if delta_pct <= -30:
+            return (True, "P0")
+        elif delta_pct <= -20:
+            return (True, "P1")
+        else:
+            return (True, "P2")
+
+    # Check attention threshold
+    if delta_pct <= attention_thresh:
+        # Attention alert — needs monitoring but not immediate action
+        return (True, dt.attention_severity)
+
+    # No threshold exceeded
+    return (False, "NONE")
+
+
 def _statistical_fallback(state: AlertState) -> AlertState:
     """
     Pure-Python anomaly detection without LLM.
@@ -448,7 +494,8 @@ def _statistical_fallback(state: AlertState) -> AlertState:
                 "execution_errors": list(state.get("execution_errors", [])),
             }
 
-    # A1: Spike/drop thresholds with consecutive hours validation
+    # A1: Spike/drop thresholds with dual threshold support
+    # First check operational thresholds (adjusted for time of day)
     p0_thresh = config.revenue_anomaly.P0.drop_percent * threshold_multiplier
     p1_thresh = config.revenue_anomaly.P1.drop_percent * threshold_multiplier
     p2_thresh = config.revenue_anomaly.P2.drop_percent * threshold_multiplier
@@ -456,29 +503,57 @@ def _statistical_fallback(state: AlertState) -> AlertState:
     alert_triggered = False
     severity = "NONE"
     confidence = 0.5
+    dual_eval = None
 
-    # Determine candidate severity based on current-hour delta
-    if rev_pct <= p0_thresh:
-        candidate_severity = "P0"
-        candidate_threshold = config.revenue_anomaly.P0.drop_percent
-        candidate_duration = config.revenue_anomaly.P0.duration_hours
-        candidate_confidence = min(0.95, 0.6 + abs(rev_zscore) * 0.1)
-    elif rev_pct <= p1_thresh:
-        candidate_severity = "P1"
-        candidate_threshold = config.revenue_anomaly.P1.drop_percent
-        candidate_duration = config.revenue_anomaly.P1.duration_hours
-        candidate_confidence = min(0.90, 0.5 + abs(rev_zscore) * 0.1)
-    elif rev_pct <= p2_thresh:
-        candidate_severity = "P2"
-        candidate_threshold = config.revenue_anomaly.P2.drop_percent
-        candidate_duration = config.revenue_anomaly.P2.duration_hours
-        candidate_confidence = min(0.85, 0.4 + abs(rev_zscore) * 0.1)
+    # Use dual thresholds if enabled
+    if config.dual_thresholds.enabled:
+        dual_eval = _evaluate_dual_thresholds(rev_pct, "revenue_drop", config)
+        if dual_eval[0]:  # Triggered
+            candidate_severity = dual_eval[1]
+            if candidate_severity == "P0":
+                candidate_threshold = config.revenue_anomaly.P0.drop_percent
+                candidate_duration = config.revenue_anomaly.P0.duration_hours
+                candidate_confidence = min(0.95, 0.6 + abs(rev_zscore) * 0.1)
+            elif candidate_severity == "P1":
+                candidate_threshold = config.revenue_anomaly.P1.drop_percent
+                candidate_duration = config.revenue_anomaly.P1.duration_hours
+                candidate_confidence = min(0.90, 0.5 + abs(rev_zscore) * 0.1)
+            elif candidate_severity in ("P2", "P2-WATCH"):
+                candidate_threshold = config.revenue_anomaly.P2.drop_percent
+                candidate_duration = config.revenue_anomaly.P2.duration_hours
+                candidate_confidence = min(0.85, 0.4 + abs(rev_zscore) * 0.1)
+            else:
+                candidate_severity = None
+                candidate_threshold = 0
+                candidate_duration = 0
+                candidate_confidence = 0.6
+        else:
+            candidate_severity = None
+            candidate_threshold = 0
+            candidate_duration = 0
+            candidate_confidence = max(0.6, 1.0 - abs(rev_pct) / 100)
     else:
-        # No threshold exceeded, no alert
-        candidate_severity = None
-        candidate_threshold = 0
-        candidate_duration = 0
-        candidate_confidence = max(0.6, 1.0 - abs(rev_pct) / 100)
+        # Original single-threshold logic (backward compatibility)
+        if rev_pct <= p0_thresh:
+            candidate_severity = "P0"
+            candidate_threshold = config.revenue_anomaly.P0.drop_percent
+            candidate_duration = config.revenue_anomaly.P0.duration_hours
+            candidate_confidence = min(0.95, 0.6 + abs(rev_zscore) * 0.1)
+        elif rev_pct <= p1_thresh:
+            candidate_severity = "P1"
+            candidate_threshold = config.revenue_anomaly.P1.drop_percent
+            candidate_duration = config.revenue_anomaly.P1.duration_hours
+            candidate_confidence = min(0.90, 0.5 + abs(rev_zscore) * 0.1)
+        elif rev_pct <= p2_thresh:
+            candidate_severity = "P2"
+            candidate_threshold = config.revenue_anomaly.P2.drop_percent
+            candidate_duration = config.revenue_anomaly.P2.duration_hours
+            candidate_confidence = min(0.85, 0.4 + abs(rev_zscore) * 0.1)
+        else:
+            candidate_severity = None
+            candidate_threshold = 0
+            candidate_duration = 0
+            candidate_confidence = max(0.6, 1.0 - abs(rev_pct) / 100)
 
     if candidate_severity is not None:
         # Verify consecutive hours before triggering
