@@ -12,7 +12,7 @@ import os
 import smtplib
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List
@@ -489,6 +489,120 @@ def _send_email(state: AlertState) -> bool:
                 )
                 return False
     return False
+
+
+def _build_digest_blocks(rows: List[tuple]) -> List[dict]:
+    """Build digest Block Kit message from pending_notifications rows.
+
+    Args:
+        rows: List of tuples (alert_id, severity, channel_group, timestamp)
+
+    Returns:
+        List of Slack Block Kit blocks
+    """
+    count = len(rows)
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f":calendar: Daily Alert Digest — {count} alerts in last 24h",
+            },
+        },
+        {"type": "divider"},
+    ]
+
+    # Add up to 20 alerts (Slack has block limits)
+    for alert_id, severity, channel_group, timestamp in rows[:20]:
+        emoji = SEVERITY_EMOJI.get(severity, "")
+        alert_text = f"{emoji} *{severity}* | {channel_group} | {timestamp} | <https://sentinel.adkaora.com/alerts/{alert_id}|View>"
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": alert_text},
+        })
+
+    # Context footer with generation time
+    blocks.append({
+        "type": "context",
+        "elements": [
+            {"type": "mrkdwn", "text": f"Generated at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"},
+        ],
+    })
+
+    return blocks
+
+
+def send_daily_digest() -> dict:
+    """
+    Send daily digest of P1/P2 alerts accumulated in pending_notifications.
+    Called by APScheduler CronTrigger job.
+    Returns: { "sent": bool, "alert_count": int, "message": str }
+    """
+    logger.info("Starting daily digest job")
+
+    # Try to get webhook URL from environment first, then config
+    webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+
+    if not webhook_url:
+        # Read from alerting_rules.yaml directly (slack_notifications not in Pydantic model yet)
+        try:
+            import yaml
+            from pathlib import Path
+            config_path = Path(__file__).parent.parent.parent / "config" / "alerting_rules.yaml"
+            with open(config_path, "r") as f:
+                config_dict = yaml.safe_load(f)
+            webhook_url = config_dict.get("slack_notifications", {}).get("webhook_url")
+        except Exception as e:
+            logger.warning("Failed to load webhook from config: %s", e)
+
+    if not webhook_url:
+        logger.warning("Slack webhook not configured, skipping digest")
+        return {"sent": False, "alert_count": 0, "message": "Webhook not configured"}
+
+    # 1. Query pending_notifications from last 24 hours
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT alert_id, severity, channel_group, timestamp
+               FROM pending_notifications
+               WHERE created_at >= ?
+               ORDER BY created_at DESC""",
+            (cutoff,)
+        ).fetchall()
+
+    if not rows:
+        logger.info("No pending alerts for digest")
+        return {"sent": False, "alert_count": 0, "message": "No pending alerts"}
+
+    # 2. Build digest Block Kit message
+    blocks = _build_digest_blocks(rows)
+
+    # 3. Send to Slack
+    payload_json = json.dumps({"blocks": blocks}).encode("utf-8")
+
+    try:
+        req = Request(
+            webhook_url,
+            data=payload_json,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                logger.info("Daily digest sent successfully (%d alerts)", len(rows))
+
+                # 4. Clear pending_notifications after successful send
+                with get_db() as conn:
+                    conn.execute("DELETE FROM pending_notifications WHERE created_at >= ?", (cutoff,))
+
+                return {"sent": True, "alert_count": len(rows), "message": "Digest sent"}
+            else:
+                logger.error("Slack digest failed with status %d", resp.status)
+                return {"sent": False, "alert_count": len(rows), "message": f"HTTP {resp.status}"}
+    except (URLError, OSError) as e:
+        logger.error("Failed to send digest: %s", e)
+        return {"sent": False, "alert_count": len(rows), "message": str(e)}
 
 
 def notifier_agent(state: AlertState) -> AlertState:
