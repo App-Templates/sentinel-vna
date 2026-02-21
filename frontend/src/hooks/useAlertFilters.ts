@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useMemo, useCallback } from 'react'
 import type { AlertFilters } from '../api/client'
 
-const FILTER_KEYS = ['severity', 'status', 'channel_group', 'from_date', 'to_date'] as const
+const FILTER_KEYS = ['severity', 'status', 'channel_group', 'from_date', 'to_date', 'assigned_to'] as const
 
 export function useAlertFilters() {
   const [searchParams, setSearchParams] = useSearchParams()

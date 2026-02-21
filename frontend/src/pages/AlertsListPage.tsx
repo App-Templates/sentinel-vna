@@ -54,11 +54,13 @@ export function AlertsListPage() {
               channelGroup={filters.channel_group ?? ''}
               fromDate={filters.from_date ?? ''}
               toDate={filters.to_date ?? ''}
+              assignedTo={filters.assigned_to ?? ''}
               onSeverityChange={(v) => setFilter('severity', v)}
               onStatusChange={(v) => setFilter('status', v)}
               onChannelGroupChange={(v) => setFilter('channel_group', v)}
               onFromDateChange={(v) => setFilter('from_date', v)}
               onToDateChange={(v) => setFilter('to_date', v)}
+              onAssignedToChange={(v) => setFilter('assigned_to', v)}
               onClear={clearFilters}
               hasActiveFilters={hasActiveFilters}
             />

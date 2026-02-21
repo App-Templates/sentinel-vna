@@ -135,6 +135,7 @@ export interface AlertSummary {
   revenue_baseline: number;
   revenue_delta_pct: number;
   created_at: string;
+  assignment?: Assignment;
 }
 
 export interface Contributor {

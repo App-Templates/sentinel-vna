@@ -8,11 +8,13 @@ interface AlertsFilterProps {
   channelGroup: string
   fromDate: string
   toDate: string
+  assignedTo: string
   onSeverityChange: (value: string) => void
   onStatusChange: (value: string) => void
   onChannelGroupChange: (value: string) => void
   onFromDateChange: (value: string) => void
   onToDateChange: (value: string) => void
+  onAssignedToChange: (value: string) => void
   onClear: () => void
   hasActiveFilters: boolean
 }
@@ -27,17 +29,26 @@ const severities: Severity[] = ['P0', 'P1', 'P2']
 const statuses: AlertStatus[] = ['OPEN', 'ACK', 'RESOLVED', 'SNOOZED']
 const channels: ChannelGroup[] = ['GOOGLE', 'OPEN_BIDDING']
 
+const TEAM_EMAILS = [
+  'vito.sena@adkaora.com',
+  'ops1@adkaora.com',
+  'ops2@adkaora.com',
+  'dev-user@adkaora.com',
+]
+
 export function AlertsFilter({
   severity,
   status,
   channelGroup,
   fromDate,
   toDate,
+  assignedTo,
   onSeverityChange,
   onStatusChange,
   onChannelGroupChange,
   onFromDateChange,
   onToDateChange,
+  onAssignedToChange,
   onClear,
   hasActiveFilters,
 }: AlertsFilterProps) {
@@ -78,6 +89,21 @@ export function AlertsFilter({
         {channels.map((c) => (
           <option key={c} value={c}>
             {c === 'OPEN_BIDDING' ? 'Open Bidding' : 'Google'}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={assignedTo}
+        onChange={(e) => onAssignedToChange(e.target.value)}
+        className={selectClass}
+      >
+        <option value="">All Assignments</option>
+        <option value="ME">Assigned to Me</option>
+        <option value="UNASSIGNED">Unassigned</option>
+        {TEAM_EMAILS.map((email) => (
+          <option key={email} value={email}>
+            {email}
           </option>
         ))}
       </select>

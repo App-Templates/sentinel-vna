@@ -72,10 +72,22 @@ export function AlertsTable({ data, isLoading, error, pageSize = 10 }: AlertsTab
       sortable: true,
       render: (row) => <StatusBadge status={row.status} />,
     },
+    {
+      key: 'assignment',
+      header: 'Assigned',
+      render: (row) =>
+        row.assignment ? (
+          <span className="inline-block px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200">
+            {row.assignment.assigned_to.split('@')[0]}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        ),
+    },
   ]
 
   if (isLoading) {
-    return <TableSkeleton rows={pageSize} columns={7} />
+    return <TableSkeleton rows={pageSize} columns={8} />
   }
 
   if (error) {
