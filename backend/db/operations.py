@@ -8,6 +8,7 @@ from typing import Any, Optional
 from backend.db.database import get_db
 from backend.db.models import (
     AlertEventModel,
+    AlertFeedbackModel,
     AlertModel,
     AlertStatus,
     EventType,
@@ -352,3 +353,88 @@ def _backtest_row_to_dict(row) -> dict[str, Any]:
         "step_hours": d.pop("step_hours", None),
     }
     return d
+
+
+# ---------------------------------------------------------------------------
+# Feedback
+# ---------------------------------------------------------------------------
+
+def create_feedback(feedback: AlertFeedbackModel) -> int:
+    """Create a feedback entry for an alert.
+
+    Automatically extracts publisher_id from the alert's contributors.
+    Returns the feedback_id of the created entry.
+    """
+    # Extract publisher_id from alert contributors
+    publisher_id = feedback.publisher_id
+    if publisher_id is None:
+        try:
+            with get_db() as conn:
+                alert_row = conn.execute(
+                    "SELECT contributors_json FROM alerts WHERE alert_id = ?",
+                    (feedback.alert_id,)
+                ).fetchone()
+                if alert_row:
+                    contributors = json.loads(alert_row["contributors_json"])
+                    if contributors and len(contributors) > 0:
+                        publisher_id = contributors[0].get("publisher_id")
+        except Exception as e:
+            logger.error("Failed to extract publisher_id from alert %s: %s", feedback.alert_id, e)
+
+    with get_db() as conn:
+        cursor = conn.execute(
+            """INSERT INTO alert_feedback (alert_id, user_id, feedback_type, comment, publisher_id, timestamp)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                feedback.alert_id,
+                feedback.user_id,
+                feedback.feedback_type.value,
+                feedback.comment,
+                publisher_id,
+                feedback.timestamp.isoformat(),
+            ),
+        )
+        feedback_id = cursor.lastrowid
+
+    logger.info("Created feedback %d for alert %s (type=%s, publisher=%s)",
+                feedback_id, feedback.alert_id, feedback.feedback_type.value, publisher_id)
+    return feedback_id
+
+
+def get_feedbacks_for_alert(alert_id: str) -> list[dict[str, Any]]:
+    """Get all feedback entries for a specific alert, ordered by timestamp DESC."""
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT feedback_id, alert_id, user_id, feedback_type, comment, publisher_id, timestamp
+               FROM alert_feedback
+               WHERE alert_id = ?
+               ORDER BY timestamp DESC""",
+            (alert_id,)
+        ).fetchall()
+    return [_row_to_dict(r) for r in rows]
+
+
+def get_publisher_feedback_history(publisher_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    """Get feedback history for a publisher with alert context.
+
+    Returns list of feedback entries joined with alert info, ordered by timestamp DESC.
+    """
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT
+                   f.feedback_id,
+                   f.alert_id,
+                   a.alert_rule,
+                   a.timestamp as alert_timestamp,
+                   f.feedback_type,
+                   f.comment,
+                   f.user_id,
+                   f.timestamp
+               FROM alert_feedback f
+               JOIN alerts a ON f.alert_id = a.alert_id
+               WHERE f.publisher_id = ?
+               ORDER BY f.timestamp DESC
+               LIMIT ?""",
+            (publisher_id, limit)
+        ).fetchall()
+    return [_row_to_dict(r) for r in rows]
