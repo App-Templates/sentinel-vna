@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 1 of 5 (Alerting Evoluto)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-21 — Roadmap created for v1.1 (brownfield evolution)
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-02-21 — Plan 01-01 completed (Linear Regression Drift Detection)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 0.5 hours
+- Total execution time: 0.5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 (Alerting Evoluto) | 1 | 0.5h | 0.5h |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 01-01 (0.5h)
+- Trend: N/A (need 3+ plans)
 
 *Updated after each plan completion*
 
@@ -48,6 +48,9 @@ Recent decisions affecting current work:
 - [Roadmap]: Quick depth (5 phases) — compressed INTV+FEED into single Phase 3
 - [Roadmap]: Phase 4 activates existing notifier agent (Block Kit code already present)
 - [Roadmap]: Phase 5 activates existing Athena connector (already coded, disabled)
+- [01-01]: Regression-first strategy for A2 (run regression before 7-day drift fallback)
+- [01-01]: Conservative statistical thresholds (R² ≥ 0.5, p < 0.05) to avoid false positives
+- [01-01]: Dynamic window selection (14-30 days) adapts to data availability
 
 ### Pending Todos
 
@@ -61,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Roadmap created, ready to plan Phase 1
-Resume file: None
+Stopped at: Plan 01-01 completed and committed
+Resume file: .planning/phases/01-alerting-evoluto/01-01-SUMMARY.md
