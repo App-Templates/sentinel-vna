@@ -22,7 +22,7 @@ export function ComparativeMetricsSection({ yesterdayComparison, movingAverage14
             <div className="flex items-start justify-between">
               <CardTitle>Yesterday Comparison</CardTitle>
               {yesterdayComparison.triggered && (
-                <Badge variant={yesterdayComparison.severity === 'P0' ? 'destructive' : 'warning'}>
+                <Badge variant={yesterdayComparison.severity as 'P0' | 'P1' | 'P2'}>
                   {yesterdayComparison.severity}
                 </Badge>
               )}
@@ -75,7 +75,9 @@ export function ComparativeMetricsSection({ yesterdayComparison, movingAverage14
             <div className="flex items-start justify-between">
               <CardTitle>14-Day Moving Average</CardTitle>
               {movingAverage14d.triggered && (
-                <Badge variant="warning">{movingAverage14d.severity}</Badge>
+                <Badge variant={movingAverage14d.severity as 'P0' | 'P1' | 'P2'}>
+                  {movingAverage14d.severity}
+                </Badge>
               )}
             </div>
           </CardHeader>
@@ -110,7 +112,7 @@ export function ComparativeMetricsSection({ yesterdayComparison, movingAverage14
 
             {movingAverage14d.divergence_hours > 0 && (
               <div className="mt-4 flex items-center gap-2">
-                <Badge variant="outline">
+                <Badge variant="default">
                   Sustained for {movingAverage14d.divergence_hours} consecutive hour{movingAverage14d.divergence_hours > 1 ? 's' : ''}
                 </Badge>
               </div>

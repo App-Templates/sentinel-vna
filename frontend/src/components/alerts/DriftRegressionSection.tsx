@@ -86,10 +86,8 @@ export function DriftRegressionSection({ drift }: Props) {
                 label={{ value: 'Revenue (indexed)', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip
-                formatter={(value: number, name: string, props: any) => {
-                  if (props.payload.projected) {
-                    return [`${value.toFixed(1)} (projected)`, 'Revenue'];
-                  }
+                formatter={(value: number | undefined) => {
+                  if (value === undefined) return ['N/A', 'Revenue'];
                   return [value.toFixed(1), 'Revenue'];
                 }}
               />
