@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 4 - Notifiche Slack (in progress)
+**Current focus:** Phase 6 - Revisione Documentale (in progress)
 
 ## Current Position
 
-Phase: 4 of 6 (Notifiche Slack)
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-02-21 — Plan 04-03 (Daily Digest Scheduler) completed
+Phase: 6 of 6 (Revisione Documentale)
+Plan: 1 of 4 in current phase
+Status: In Progress
+Last activity: 2026-02-21 — Plan 06-01 (Operational Docs Update) completed
 
-Progress: [█████████░] 56%
+Progress: [██████████] 58%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 0.13 hours
-- Total execution time: 1.76 hours
+- Total execution time: 1.81 hours
 
 **By Phase:**
 
@@ -31,15 +31,17 @@ Progress: [█████████░] 56%
 | 02 (Nuovi Tipi Alert) | 4 | 0.22h | 0.05h |
 | 03 (Operator Workflow) | 3 | 0.21h | 0.07h |
 | 04 (Notifiche Slack) | 3 | 0.03h | 0.01h |
+| 06 (Revisione Documentale) | 1 | 0.05h | 0.05h |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (0.05h), 03-02 (0.08h), 03-03 (0.08h), 04-01 (0.07h), 04-02 (0.05h)
+- Last 5 plans: 03-02 (0.08h), 03-03 (0.08h), 04-01 (0.07h), 04-02 (0.05h), 06-01 (0.05h)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 04 P01 | 0.07 | 3 tasks | 5 files |
 | Phase 04 P02 | 0.05 | 3 tasks | 3 files |
 | Phase 04 P03 | 0.03 | 3 tasks | 3 files |
+| Phase 06 P01 | 0.05 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -102,6 +104,9 @@ Recent decisions affecting current work:
 - [Phase 04-02]: pending_notifications table accumulates P1/P2 alerts for daily digest with created_at index
 - [Phase 04-02]: Three Block Kit templates provide different detail levels based on severity (P0 full, P1 medium, P2 compact)
 - [Phase 04-02]: delivery_status distinguishes slack_sent (immediate) vs slack_queued (digest) for observability
+- [Phase 06-01]: Alert rules section documents all 7 rules with accurate thresholds and trigger conditions
+- [Phase 06-01]: Comparative alerting section added after metrics for visibility of Phase 1 feature
+- [Phase 06-01]: A6 coverage-zero triage documented in triage section for operator visibility
 
 ### Pending Todos
 
@@ -119,5 +124,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 04-03-PLAN.md (Daily Digest Scheduler) - Phase 04 Complete
-Resume file: .planning/phases/04-notifiche-slack/04-03-SUMMARY.md
+Stopped at: Completed 06-01-PLAN.md (Operational Docs Update)
+Resume file: .planning/phases/06-revisione-documentale/06-01-SUMMARY.md
