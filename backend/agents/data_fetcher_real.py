@@ -394,7 +394,9 @@ def _fetch_drift_baseline(
         return None
 
     # Convert timestamp to date, go back one day (we want historical baseline, not including current day)
-    end_date = timestamp.normalize() - timedelta(days=1)
+    # Ensure timestamp is tz-naive to match parquet data
+    ts_naive = timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
+    end_date = ts_naive.normalize() - timedelta(days=1)
     start_date = end_date - timedelta(days=window_days - 1)
 
     # Filter by channel and date range
