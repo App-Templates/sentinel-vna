@@ -52,6 +52,24 @@ class DualThresholdsConfig(BaseModel):
     attention_severity: str
 
 
+class YesterdayComparisonConfig(BaseModel):
+    enabled: bool
+    threshold_percent: float
+    severity_mapping: dict[str, str]
+
+
+class MovingAverage14dConfig(BaseModel):
+    enabled: bool
+    divergence_threshold_percent: float
+    sustained_hours: int
+    severity: str
+
+
+class ComparativeAlertingConfig(BaseModel):
+    yesterday_comparison: YesterdayComparisonConfig
+    moving_average_14d: MovingAverage14dConfig
+
+
 class NearZeroConfig(BaseModel):
     revenue_threshold_eur: float
     coverage_threshold: float
@@ -108,6 +126,7 @@ class AlertingConfig(BaseModel):
     revenue_anomaly: RevenueAnomalyConfig
     drift_detection: DriftDetectionConfig
     drift_regression: DriftRegressionConfig
+    comparative_alerting: ComparativeAlertingConfig
     dual_thresholds: DualThresholdsConfig
     near_zero: NearZeroConfig
     triage: TriageConfig
