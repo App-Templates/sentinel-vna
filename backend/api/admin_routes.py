@@ -10,6 +10,7 @@ import yaml
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from backend.agents.notifier import send_daily_digest
 from backend.api.rate_limit import limiter
 
 from backend.scheduler.scheduler import is_scheduler_running
@@ -473,3 +474,19 @@ def test_slack(request: Request, body: TestSlackRequest):
         return {"success": False, "message": f"Connection error: {str(e)}"}
     except Exception as e:
         return {"success": False, "message": f"Failed to send test message: {str(e)}"}
+
+
+@router.post("/trigger-digest")
+@limiter.limit("10/hour")
+def trigger_digest(request: Request):
+    """Manually trigger daily digest send (for testing without waiting for scheduled time)."""
+    try:
+        result = send_daily_digest()
+        return {
+            "success": result["sent"],
+            "alert_count": result["alert_count"],
+            "message": result["message"],
+        }
+    except Exception as e:
+        logger.error("Failed to trigger digest: %s", e)
+        return {"success": False, "alert_count": 0, "message": f"Error: {str(e)}"}
