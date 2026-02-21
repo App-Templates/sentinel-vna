@@ -118,7 +118,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Alerting Evoluto | 0/? | Complete    | 2026-02-21 |
-| 2. Nuovi Tipi Alert | 4/4 | Complete   | 2026-02-21 |
+| 2. Nuovi Tipi Alert | 4/4 | Complete    | 2026-02-21 |
 | 3. Operator Workflow | 0/? | Not started | - |
 | 4. Notifiche Slack | 0/? | Not started | - |
 | 5. Dati Live e Multi-canale | 0/? | Not started | - |
