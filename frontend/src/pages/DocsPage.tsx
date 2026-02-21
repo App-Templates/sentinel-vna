@@ -54,7 +54,7 @@ function CodeBlock({ children }: { children: string }) {
 // Operational Tab
 // ---------------------------------------------------------------------------
 
-const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq']
+const OP_SECTIONS = ['alert-rules', 'severity', 'triage', 'metrics', 'comparative', 'pipeline', 'contributors', 'geo', 'env', 'multi-metric', 'opt-windows', 'ecpm-patterns', 'hidden-patterns', 'danger-zones', 'driver-guide', 'faq']
 
 function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; toggle: (id: string) => void }) {
   return (
@@ -75,9 +75,9 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
               <Td>Quando il delta % ricavi supera le soglie P0/P1/P2. Z-score check + soppressione off-peak (22-06).</Td>
             </tr>
             <tr>
-              <Td><Badge color="orange">A2</Badge></Td><Td className="font-medium">7-Day Drift</Td>
-              <Td>Trend negativo graduale su 7 giorni consecutivi</Td>
-              <Td>Media mobile a 7 giorni scesa di <strong>&ge; 8%</strong>. Rileva erosioni lente.</Td>
+              <Td><Badge color="orange">A2</Badge></Td><Td className="font-medium">Drift (Regression + 7d MA)</Td>
+              <Td>Trend negativo graduale rilevato via regressione lineare (14-30gg) o media mobile 7gg</Td>
+              <Td>Regressione lineare: slope <strong>&le; -2%/day</strong>, drop cumulativo <strong>&ge; -15%</strong>, R² <strong>&ge; 0.5</strong>, p <strong>&lt; 0.05</strong>. Fallback: media 7gg <strong>-8%</strong>.</Td>
             </tr>
             <tr>
               <Td><Badge color="yellow">A3</Badge></Td><Td className="font-medium">Near-Zero</Td>
@@ -182,6 +182,27 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
           <div>
             <h4 className="font-semibold text-gray-900">Revenue</h4>
             <p>Prodotto: <code className="rounded bg-gray-100 px-1 text-xs">revenue = bacino x coverage x eCPM / 1000</code>. Ecco perche' il triage decompone nelle componenti.</p>
+          </div>
+        </div>
+      </Section>
+
+      {/* COMPARATIVE ALERTING */}
+      <Section id="comparative" icon={TrendingDown} title="Comparative Alerting (Ieri vs 14d Media)" open={openSections.has('comparative')} onToggle={toggle}>
+        <p className="mb-4">
+          Phase 1 ha introdotto confronti allineati alla pratica operativa del team TAM&amp;Yield:
+        </p>
+        <div className="space-y-3">
+          <div>
+            <h4 className="font-semibold text-gray-900">Yesterday comparison</h4>
+            <p>Revenue oraria confrontata con stesse ore di ieri. Alert quando deviazione <strong>&ge; 30%</strong> (P0/P1/P2 operativo) o <strong>&ge; 15%</strong> (P2-WATCH attenzione).</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900">14-day moving average</h4>
+            <p>Revenue confrontata con media ultimi 14 giorni (same-weekday pattern). Rileva divergenze da trend recente.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900">Visualizzazione</h4>
+            <p>Sezioni dedicate in alert detail quando dati disponibili (step 8-9 dinamici).</p>
           </div>
         </div>
       </Section>
