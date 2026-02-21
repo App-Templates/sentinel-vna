@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from backend.db.database import get_db
 from backend.db.models import (
+    AlertAssignmentModel,
     AlertEventModel,
     AlertFeedbackModel,
     AlertModel,
@@ -70,43 +71,51 @@ def get_alerts(
     channel: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    assigned_to: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
     conditions: list[str] = []
     params: list[Any] = []
 
+    # Determine if we need to JOIN with alert_assignments
+    from_clause = "alerts"
+    if assigned_to:
+        from_clause = "alerts INNER JOIN alert_assignments ON alerts.alert_id = alert_assignments.alert_id"
+        conditions.append("alert_assignments.assigned_to = ?")
+        params.append(assigned_to)
+
     if severity:
-        conditions.append("severity = ?")
+        conditions.append("alerts.severity = ?")
         params.append(severity)
     if status:
-        conditions.append("status = ?")
+        conditions.append("alerts.status = ?")
         params.append(status)
     if channel:
-        conditions.append("channel_group = ?")
+        conditions.append("alerts.channel_group = ?")
         params.append(channel)
     if date_from:
-        conditions.append("timestamp >= ?")
+        conditions.append("alerts.timestamp >= ?")
         params.append(date_from)
     if date_to:
-        conditions.append("timestamp <= ?")
+        conditions.append("alerts.timestamp <= ?")
         params.append(date_to)
 
     where_clause = " AND ".join(conditions) if conditions else "1=1"
 
     with get_db() as conn:
         count_row = conn.execute(
-            f"SELECT COUNT(*) as cnt FROM alerts WHERE {where_clause}", params
+            f"SELECT COUNT(*) as cnt FROM {from_clause} WHERE {where_clause}", params
         ).fetchone()
         total = count_row["cnt"] if count_row else 0
 
         rows = conn.execute(
-            f"""SELECT alert_id, timestamp, severity, channel_group, status,
-                       alert_rule, revenue_current, revenue_baseline,
-                       revenue_delta_pct, triage_label, created_at
-                FROM alerts
+            f"""SELECT alerts.alert_id, alerts.timestamp, alerts.severity, alerts.channel_group, alerts.status,
+                       alerts.alert_rule, alerts.revenue_current, alerts.revenue_baseline,
+                       alerts.revenue_delta_pct, alerts.triage_label, alerts.created_at
+                FROM {from_clause}
                 WHERE {where_clause}
-                ORDER BY timestamp DESC
+                ORDER BY alerts.timestamp DESC
                 LIMIT ? OFFSET ?""",
             params + [limit, offset],
         ).fetchall()
@@ -129,6 +138,13 @@ def get_alert_by_id(alert_id: str) -> Optional[dict[str, Any]]:
             (alert_id,),
         ).fetchall()
         alert["events"] = [_row_to_dict(e) for e in events]
+
+        # Include assignment information via LEFT JOIN
+        assignment_row = conn.execute(
+            "SELECT * FROM alert_assignments WHERE alert_id = ?",
+            (alert_id,)
+        ).fetchone()
+        alert["assignment"] = _row_to_dict(assignment_row) if assignment_row else None
 
     return alert
 
@@ -438,3 +454,60 @@ def get_publisher_feedback_history(publisher_id: str, limit: int = 50) -> list[d
             (publisher_id, limit)
         ).fetchall()
     return [_row_to_dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Alert Assignments
+# ---------------------------------------------------------------------------
+
+def assign_alert(assignment: AlertAssignmentModel) -> int:
+    """Assign an alert to a user. Uses INSERT OR REPLACE to handle reassignments.
+
+    Returns the assignment_id.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            """INSERT OR REPLACE INTO alert_assignments (alert_id, assigned_to, assigned_by, assigned_at)
+               VALUES (?, ?, ?, ?)""",
+            (
+                assignment.alert_id,
+                assignment.assigned_to,
+                assignment.assigned_by,
+                assignment.assigned_at.isoformat(),
+            ),
+        )
+        assignment_id = cursor.lastrowid
+
+    logger.info("Alert %s assigned to %s by %s", assignment.alert_id, assignment.assigned_to, assignment.assigned_by)
+    return assignment_id
+
+
+def unassign_alert(alert_id: str) -> bool:
+    """Remove assignment for an alert.
+
+    Returns True if an assignment was deleted, False otherwise.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            "DELETE FROM alert_assignments WHERE alert_id = ?",
+            (alert_id,)
+        )
+        deleted = cursor.rowcount > 0
+
+    if deleted:
+        logger.info("Alert %s unassigned", alert_id)
+    return deleted
+
+
+def get_alert_assignment(alert_id: str) -> Optional[dict[str, Any]]:
+    """Get the assignment for a specific alert.
+
+    Returns dict with assignment fields or None if not assigned.
+    """
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT * FROM alert_assignments WHERE alert_id = ?",
+            (alert_id,)
+        ).fetchone()
+
+    return _row_to_dict(row) if row else None
