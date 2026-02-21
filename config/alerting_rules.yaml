@@ -30,6 +30,20 @@ drift_regression:
   cumulative_drop_threshold_percent: -15.0
   min_data_points: 10
 
+comparative_alerting:
+  yesterday_comparison:
+    enabled: true
+    threshold_percent: -30
+    severity_mapping:
+      below_minus_30: P0
+      below_minus_20: P1
+      below_minus_10: P2
+  moving_average_14d:
+    enabled: true
+    divergence_threshold_percent: -25
+    sustained_hours: 3
+    severity: P1
+
 dual_thresholds:
   enabled: true
   operational:
