@@ -217,11 +217,45 @@ def _calculate_baseline_from_hourly(df: pd.DataFrame, current_ts: datetime, chan
     """
     Calculate 7-day baseline: same hour, same weekday average over up to 7 weeks.
     Uses data points from -7d, -14d, -21d, -28d, -35d, -42d, -49d.
+
+    Excludes periods with manual interventions to avoid contaminating baseline with
+    intentional operational changes (pricing rules, floor CPM adjustments, etc).
     """
+    from backend.db.operations import get_interventions_for_period
+
     baseline_points = []
+    excluded_intervention_count = 0
+
+    # Get interventions for the entire baseline window (49 days back)
+    baseline_start = current_ts - timedelta(days=7 * 7)  # 49 days back
+    baseline_end = current_ts
+    interventions = get_interventions_for_period(baseline_start, baseline_end, publisher_id=None)
+
+    # Extract intervention timestamps into set for fast lookup
+    intervention_times = set()
+    if interventions:
+        for intervention in interventions:
+            try:
+                intervention_ts = pd.to_datetime(intervention['timestamp'])
+                # Make timezone-naive for comparison
+                if intervention_ts.tzinfo is not None:
+                    intervention_ts = intervention_ts.tz_localize(None)
+                intervention_times.add(intervention_ts)
+            except Exception as e:
+                logger.warning("Failed to parse intervention timestamp: %s", e)
 
     for weeks_back in range(1, 8):
         baseline_ts = current_ts - timedelta(days=7 * weeks_back)
+
+        # Check if this timestamp has an intervention
+        if baseline_ts in intervention_times:
+            excluded_intervention_count += 1
+            logger.debug(
+                "Excluding baseline point at %s due to manual intervention",
+                baseline_ts.isoformat()
+            )
+            continue
+
         metrics = _get_hourly_metrics(df, baseline_ts, channel)
         if metrics:
             baseline_points.append(metrics)
@@ -306,7 +340,7 @@ def _calculate_baseline_from_hourly(df: pd.DataFrame, current_ts: datetime, chan
         bac_std = max(1.0, abs(bac_mean) * 0.15)
         cov_std = max(0.001, abs(cov_mean) * 0.10)
 
-    return {
+    result = {
         "baseline_metrics": {
             "revenue": round(avg_rev, 2),
             "bacino": int(avg_bac),
@@ -323,6 +357,18 @@ def _calculate_baseline_from_hourly(df: pd.DataFrame, current_ts: datetime, chan
             "baseline_data_points": n,
         }
     }
+
+    # Add note if interventions were excluded from baseline
+    if excluded_intervention_count > 0:
+        result["historical_stats"]["baseline_notes"] = (
+            f"Excluded {excluded_intervention_count} intervention period(s) from baseline calculation"
+        )
+        logger.info(
+            "Baseline calculation excluded %d manual intervention period(s)",
+            excluded_intervention_count
+        )
+
+    return result
 
 
 def _calculate_drift_metrics(df_daily: pd.DataFrame, current_ts: datetime, channel: str) -> dict:
