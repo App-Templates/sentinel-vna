@@ -34,7 +34,7 @@
 
 ### Notifiche
 
-- [ ] **NOTF-01**: Il sistema invia notifiche su canale Slack dedicato SENTINEL
+- [x] **NOTF-01**: Il sistema invia notifiche su canale Slack dedicato SENTINEL
 - [ ] **NOTF-02**: Il livello di dettaglio della notifica è configurabile per severity (P0=report completo con contributors e azioni, P2=una riga con link alla dashboard)
 - [ ] **NOTF-03**: Alert P0 genera notifica Slack immediata; P1/P2 vengono raggruppati in riepilogo giornaliero
 
@@ -90,7 +90,7 @@
 | INTV-01 | Phase 3 | Complete |
 | INTV-02 | Phase 3 | Complete |
 | INTV-03 | Phase 3 | Complete |
-| NOTF-01 | Phase 4 | Pending |
+| NOTF-01 | Phase 4 | Complete |
 | NOTF-02 | Phase 4 | Pending |
 | NOTF-03 | Phase 4 | Pending |
 | DATA-01 | Phase 5 | Pending |

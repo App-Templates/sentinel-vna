@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 3 - Operator Workflow (in progress)
+**Current focus:** Phase 4 - Notifiche Slack (in progress)
 
 ## Current Position
 
-Phase: 3 of 6 (Operator Workflow)
-Plan: 3 of 4 in current phase
+Phase: 4 of 6 (Notifiche Slack)
+Plan: 1 of 3 in current phase
 Status: In Progress
-Last activity: 2026-02-21 — Plan 03-03 (Manual Intervention Tracking) completed
+Last activity: 2026-02-21 — Plan 04-01 (Slack Configuration Admin UI) completed
 
-Progress: [████████░░] 46%
+Progress: [████████░░] 50%
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [████████░░] 46%
 
 *Updated after each plan completion*
 | Phase 03 P04 | 0.12 | 5 tasks | 9 files |
+| Phase 04 P01 | 0.07 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Radio group for feedback categories provides clear visual hierarchy
 - [Phase 03]: Two-button intervention save pattern supports quick logging and alert-specific tracking
 - [Phase 03]: Assignment in header, panels at bottom keeps operator workflow separate from alert analysis
+- [Phase 04]: Slack configuration stored in alerting_rules.yaml for consistency with other alert rules
+- [Phase 04]: Three-endpoint pattern (GET/PUT/TEST) for Slack admin config management
+- [Phase 04]: Immediate vs digest severity separation for flexible notification routing
 
 ### Pending Todos
 
@@ -110,5 +114,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-03-PLAN.md (Manual Intervention Tracking)
-Resume file: .planning/phases/03-operator-workflow/03-03-SUMMARY.md
+Stopped at: Completed 04-01-PLAN.md (Slack Configuration Admin UI)
+Resume file: .planning/phases/04-notifiche-slack/04-01-SUMMARY.md
