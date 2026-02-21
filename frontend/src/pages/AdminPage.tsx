@@ -9,6 +9,9 @@ import {
   useTestDataSource,
   useAlertingRules,
   useUpdateAlertingRules,
+  useSlackConfig,
+  useUpdateSlackConfig,
+  useTestSlackWebhook,
 } from '../api/client'
 
 interface ParquetInfo {
@@ -774,6 +777,208 @@ function InputField({
         placeholder={placeholder}
         className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
+    </div>
+  )
+}
+
+/* ============================================================
+   Slack Configuration Page
+   ============================================================ */
+
+export function SlackConfigPage() {
+  const { data, isLoading, error } = useSlackConfig()
+  const updateMutation = useUpdateSlackConfig()
+  const testMutation = useTestSlackWebhook()
+
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [channel, setChannel] = useState('')
+  const [immediateSeverities, setImmediateSeverities] = useState<string[]>([])
+  const [digestSeverities, setDigestSeverities] = useState<string[]>([])
+  const [digestTime, setDigestTime] = useState('')
+  const [initialized, setInitialized] = useState(false)
+
+  // Sync remote state into local state once loaded
+  useEffect(() => {
+    if (data && !initialized) {
+      setWebhookUrl(data.webhook_url ?? '')
+      setChannel(data.channel ?? 'sentinel-alerts')
+      setImmediateSeverities(data.immediate_severities ?? ['P0'])
+      setDigestSeverities(data.digest_severities ?? ['P1', 'P2'])
+      setDigestTime(data.digest_time_utc ?? '08:00')
+      setInitialized(true)
+    }
+  }, [data, initialized])
+
+  function handleSave() {
+    updateMutation.mutate({
+      webhook_url: webhookUrl,
+      channel,
+      immediate_severities: immediateSeverities,
+      digest_severities: digestSeverities,
+      digest_time_utc: digestTime,
+    })
+  }
+
+  function handleTest() {
+    if (!webhookUrl) {
+      return
+    }
+    testMutation.mutate({ webhook_url: webhookUrl })
+  }
+
+  function toggleSeverity(severity: string, list: string[], setter: (val: string[]) => void) {
+    if (list.includes(severity)) {
+      setter(list.filter((s) => s !== severity))
+    } else {
+      setter([...list, severity])
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-64" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-red-500">Failed to load Slack configuration.</p>
+          <p className="mt-2 text-sm text-gray-400">Make sure the backend is running and the admin endpoints are available.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <Monitor size={24} />
+        Slack Notifications
+      </h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Slack Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Webhook URL */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Webhook URL</label>
+            <input
+              type="text"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="https://hooks.slack.com/services/..."
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Channel */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Channel</label>
+            <input
+              type="text"
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+              placeholder="sentinel-alerts"
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Immediate Severities */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-gray-500">Immediate Notification (sent as soon as detected)</label>
+            <div className="flex gap-3">
+              {(['P0', 'P1', 'P2'] as const).map((sev) => (
+                <label key={sev} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={immediateSeverities.includes(sev)}
+                    onChange={() => toggleSeverity(sev, immediateSeverities, setImmediateSeverities)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">{sev}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Digest Severities */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-gray-500">Daily Digest (grouped in daily summary)</label>
+            <div className="flex gap-3">
+              {(['P0', 'P1', 'P2'] as const).map((sev) => (
+                <label key={sev} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={digestSeverities.includes(sev)}
+                    onChange={() => toggleSeverity(sev, digestSeverities, setDigestSeverities)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">{sev}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Digest Time */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Digest Time (UTC)</label>
+            <input
+              type="time"
+              value={digestTime}
+              onChange={(e) => setDigestTime(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Test Connection */}
+          <div className="border-t border-gray-200 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTest}
+              disabled={testMutation.isPending || !webhookUrl}
+            >
+              {testMutation.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : null}
+              Test Connection
+            </Button>
+            {testMutation.isSuccess && testMutation.data?.success && (
+              <span className="ml-2 text-sm text-green-600">{testMutation.data.message}</span>
+            )}
+            {testMutation.isSuccess && !testMutation.data?.success && (
+              <span className="ml-2 text-sm text-red-600">{testMutation.data?.message || 'Test failed'}</span>
+            )}
+            {testMutation.isError && (
+              <span className="ml-2 text-sm text-red-600">Connection error</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <div className="flex items-center gap-3">
+        <Button onClick={handleSave} disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Save size={14} />
+          )}
+          Save Configuration
+        </Button>
+        {updateMutation.isSuccess && (
+          <span className="text-sm text-green-600">Configuration saved successfully.</span>
+        )}
+        {updateMutation.isError && (
+          <span className="text-sm text-red-600">Failed to save configuration.</span>
+        )}
+      </div>
     </div>
   )
 }

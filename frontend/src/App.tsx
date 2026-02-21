@@ -6,7 +6,7 @@ import { AlertDetailPage } from './pages/AlertDetailPage'
 import { AlertsListPage } from './pages/AlertsListPage'
 import { BacktestPage } from './pages/BacktestPage'
 import { HealthPage } from './pages/HealthPage'
-import { DataSourcesPage, AlertingRulesPage } from './pages/AdminPage'
+import { DataSourcesPage, AlertingRulesPage, SlackConfigPage } from './pages/AdminPage'
 import { PublishersPage } from './pages/PublishersPage'
 import { PublisherDetailPage } from './pages/PublisherDetailPage'
 import { OperationalDocsPage, TechnicalDocsPage } from './pages/DocsPage'
@@ -39,6 +39,7 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/admin/datasources" replace />} />
           <Route path="/admin/datasources" element={<DataSourcesPage />} />
           <Route path="/admin/rules" element={<AlertingRulesPage />} />
+          <Route path="/admin/slack" element={<SlackConfigPage />} />
           <Route path="/docs" element={<Navigate to="/docs/operativo" replace />} />
           <Route path="/docs/operativo" element={<OperationalDocsPage />} />
           <Route path="/docs/tecnico" element={<TechnicalDocsPage />} />

@@ -334,6 +334,39 @@ export function useUpdateAlertingRules() {
   })
 }
 
+// --- Slack Configuration Hooks ---
+
+export interface SlackConfig {
+  webhook_url: string
+  channel: string
+  immediate_severities: string[]
+  digest_severities: string[]
+  digest_time_utc: string
+}
+
+export function useSlackConfig() {
+  return useQuery<SlackConfig>({
+    queryKey: ['slack-config'],
+    queryFn: () => fetchJSON<SlackConfig>('/admin/slack-config'),
+  })
+}
+
+export function useUpdateSlackConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (config: Partial<SlackConfig>) =>
+      fetchJSON('/admin/slack-config', { method: 'PUT', body: JSON.stringify(config) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['slack-config'] }),
+  })
+}
+
+export function useTestSlackWebhook() {
+  return useMutation({
+    mutationFn: (params: { webhook_url: string }) =>
+      fetchJSON<{ success: boolean; message: string }>('/admin/test-slack', { method: 'POST', body: JSON.stringify(params) }),
+  })
+}
+
 // --- Operator Workflow Hooks (Phase 3) ---
 
 export function useSubmitFeedback() {
