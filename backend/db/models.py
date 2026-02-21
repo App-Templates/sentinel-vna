@@ -41,6 +41,15 @@ class EventType(str, Enum):
     COMMENT = "COMMENT"
 
 
+class FeedbackCategory(str, Enum):
+    REAL = "REAL"
+    FALSE_POSITIVE_MANUAL_INTERVENTION = "FALSE_POSITIVE_MANUAL_INTERVENTION"
+    FALSE_POSITIVE_SEASONALITY = "FALSE_POSITIVE_SEASONALITY"
+    FALSE_POSITIVE_TECHNICAL = "FALSE_POSITIVE_TECHNICAL"
+    FALSE_POSITIVE_PUBLISHER_CAMPAIGN = "FALSE_POSITIVE_PUBLISHER_CAMPAIGN"
+    FALSE_POSITIVE_MARKET_NOISE = "FALSE_POSITIVE_MARKET_NOISE"
+
+
 class RecheckStatus(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
@@ -111,6 +120,24 @@ class RecheckQueueModel(BaseModel):
     scheduled_at: datetime
     status: RecheckStatus = RecheckStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AlertFeedbackModel(BaseModel):
+    feedback_id: Optional[int] = None
+    alert_id: str
+    user_id: str
+    feedback_type: FeedbackCategory
+    comment: Optional[str] = None
+    publisher_id: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AlertAssignmentModel(BaseModel):
+    assignment_id: Optional[int] = None
+    alert_id: str
+    assigned_to: str
+    assigned_by: str
+    assigned_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 def generate_alert_id(severity: Severity, ts: Optional[datetime] = None) -> str:
@@ -200,9 +227,41 @@ CREATE TABLE IF NOT EXISTS backtest_results (
 );
 """
 
+SQL_CREATE_ALERT_FEEDBACK = """
+CREATE TABLE IF NOT EXISTS alert_feedback (
+    feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    feedback_type TEXT NOT NULL CHECK(feedback_type IN (
+        'REAL',
+        'FALSE_POSITIVE_MANUAL_INTERVENTION',
+        'FALSE_POSITIVE_SEASONALITY',
+        'FALSE_POSITIVE_TECHNICAL',
+        'FALSE_POSITIVE_PUBLISHER_CAMPAIGN',
+        'FALSE_POSITIVE_MARKET_NOISE'
+    )),
+    comment TEXT,
+    publisher_id TEXT,
+    timestamp TEXT NOT NULL,
+    FOREIGN KEY (alert_id) REFERENCES alerts(alert_id)
+);
+"""
+
+SQL_CREATE_ALERT_ASSIGNMENTS = """
+CREATE TABLE IF NOT EXISTS alert_assignments (
+    assignment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_id TEXT NOT NULL UNIQUE,
+    assigned_to TEXT NOT NULL,
+    assigned_by TEXT NOT NULL,
+    assigned_at TEXT NOT NULL,
+    FOREIGN KEY (alert_id) REFERENCES alerts(alert_id)
+);
+"""
+
 SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alerts(timestamp);",
     "CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);",
     "CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity);",
     "CREATE INDEX IF NOT EXISTS idx_pipeline_runs_created ON pipeline_runs(created_at);",
+    "CREATE INDEX IF NOT EXISTS idx_feedback_publisher ON alert_feedback(publisher_id);",
 ]
