@@ -1,4 +1,8 @@
 from typing import TypedDict
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
 
 
 class AlertState(TypedDict, total=False):
@@ -36,3 +40,7 @@ class AlertState(TypedDict, total=False):
     execution_start: str
     execution_errors: list
     data_source: str
+
+    # Comparative alerting fields (v1.1)
+    yesterday_comparison: NotRequired[dict]  # {delta_pct, same_hours_revenue_yesterday, current_hour_revenue, triggered}
+    moving_average_14d: NotRequired[dict]    # {avg_revenue, delta_pct, divergence_hours, triggered}
