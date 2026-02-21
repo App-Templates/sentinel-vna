@@ -23,7 +23,7 @@
 
 - [x] **FEED-01**: L'operatore può confermare un alert come reale o segnalarlo come falso positivo scegliendo tra categorie predefinite (intervento manuale, stagionalità, tecnico, campagna publisher, rumore mercato)
 - [x] **FEED-02**: L'operatore può aggiungere un commento testuale con contesto a qualsiasi alert
-- [ ] **FEED-03**: L'operatore può assegnare un alert a un collega del team
+- [x] **FEED-03**: L'operatore può assegnare un alert a un collega del team
 - [x] **FEED-04**: Il sistema mostra lo storico dei feedback sullo stesso publisher/pattern quando si visualizza un alert
 
 ### Interventi Manuali
@@ -85,7 +85,7 @@
 | ALRT-05 | Phase 1 | Pending |
 | FEED-01 | Phase 3 | Complete |
 | FEED-02 | Phase 3 | Complete |
-| FEED-03 | Phase 3 | Pending |
+| FEED-03 | Phase 3 | Complete |
 | FEED-04 | Phase 3 | Complete |
 | INTV-01 | Phase 3 | Pending |
 | INTV-02 | Phase 3 | Pending |
