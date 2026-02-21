@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Clock } from 'lucide-react'
+import { ArrowLeft, Clock, X } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import {
   useAlert,
@@ -8,6 +8,8 @@ import {
   useResolveAlert,
   useRecheckAlert,
   useAddComment,
+  useAssignAlert,
+  useUnassignAlert,
 } from '../api/client'
 import { SeverityBadge, StatusBadge, TriageBadge, ChannelBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -21,6 +23,8 @@ import { GeoBreakdownSection } from '../components/alerts/GeoBreakdownSection'
 import { EnvironmentSplitSection } from '../components/alerts/EnvironmentSplitSection'
 import { InsightsSection } from '../components/alerts/InsightsSection'
 import { CacheWarningSection } from '../components/alerts/CacheWarningSection'
+import { FeedbackPanel } from '../components/alerts/FeedbackPanel'
+import { InterventionPanel } from '../components/alerts/InterventionPanel'
 import { formatTimestamp } from '../lib/utils'
 import type { Alert } from '../types/alert'
 
@@ -55,6 +59,8 @@ export function AlertDetailPage() {
   const resolveMutation = useResolveAlert()
   const recheckMutation = useRecheckAlert()
   const commentMutation = useAddComment()
+  const assignMutation = useAssignAlert()
+  const unassignMutation = useUnassignAlert()
 
   const visibleSteps = useMemo(() => {
     if (!alert) return STEPS;
@@ -65,6 +71,35 @@ export function AlertDetailPage() {
       return true;
     });
   }, [alert])
+
+  // Extract publisher ID from contributors
+  const publisherId = alert?.contributors?.[0]?.publisher_id || 'UNKNOWN'
+
+  // Team emails for assignment
+  const TEAM_EMAILS = [
+    'vito.sena@adkaora.com',
+    'ops1@adkaora.com',
+    'ops2@adkaora.com',
+    'dev-user@adkaora.com',
+  ]
+
+  const handleAssign = async (email: string) => {
+    if (!alertId) return
+    try {
+      await assignMutation.mutateAsync({ alertId, assignedTo: email })
+    } catch (err) {
+      console.error('Failed to assign alert:', err)
+    }
+  }
+
+  const handleUnassign = async () => {
+    if (!alertId) return
+    try {
+      await unassignMutation.mutateAsync(alertId)
+    } catch (err) {
+      console.error('Failed to unassign alert:', err)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -107,12 +142,12 @@ export function AlertDetailPage() {
       </nav>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={20} />
           </Button>
-          <div>
+          <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-gray-900">
                 Alert {alert.alert_id.slice(0, 8)}
@@ -132,6 +167,42 @@ export function AlertDetailPage() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Assignment Section */}
+        <div className="flex items-center gap-2">
+          {alert.assignment ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+              <span className="text-sm text-blue-900">
+                Assigned to: <span className="font-medium">{alert.assignment.assigned_to}</span>
+              </span>
+              <button
+                onClick={handleUnassign}
+                disabled={unassignMutation.isPending}
+                className="p-0.5 hover:bg-blue-100 rounded transition-colors"
+                title="Unassign"
+              >
+                <X size={14} className="text-blue-700" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Assign to:</span>
+              <select
+                value=""
+                onChange={(e) => e.target.value && handleAssign(e.target.value)}
+                disabled={assignMutation.isPending}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Select team member...</option>
+                {TEAM_EMAILS.map((email) => (
+                  <option key={email} value={email}>
+                    {email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -197,6 +268,12 @@ export function AlertDetailPage() {
         )}
 
         {currentStep === 'cache' && <CacheWarningSection warning={alert.insights?.cache_warning ?? ''} />}
+      </div>
+
+      {/* Operator Workflow Panels */}
+      <div className="mt-8 space-y-6 border-t pt-6">
+        <FeedbackPanel alert={alert} publisherId={publisherId} />
+        <InterventionPanel alert={alert} publisherId={publisherId} />
       </div>
 
       {/* Execution Metadata */}
