@@ -153,13 +153,14 @@ def _save_to_db(state: AlertState) -> bool:
         return False
 
 
-def _build_slack_blocks(state: AlertState) -> List[dict]:
-    """Build Slack Block Kit message."""
+def _build_slack_blocks_p0(state: AlertState) -> List[dict]:
+    """Build full Slack Block Kit message for P0 alerts (critical urgency)."""
     payload = state.get("alert_payload", {})
-    severity = payload.get("severity", "P1")
+    severity = payload.get("severity", "P0")
     emoji = SEVERITY_EMOJI.get(severity, "")
     delta = payload.get("revenue", {})
     triage = payload.get("triage_label", "UNKNOWN")
+    alert_id = payload.get("alert_id", "N/A")
 
     blocks = [
         {
@@ -172,7 +173,7 @@ def _build_slack_blocks(state: AlertState) -> List[dict]:
         {
             "type": "section",
             "fields": [
-                {"type": "mrkdwn", "text": f"*Alert ID:*\n{payload.get('alert_id', 'N/A')}"},
+                {"type": "mrkdwn", "text": f"*Alert ID:*\n{alert_id}"},
                 {"type": "mrkdwn", "text": f"*Rule:*\n{payload.get('alert_rule', 'A1')}"},
                 {"type": "mrkdwn", "text": f"*Revenue:*\nEUR {delta.get('current', 0):,.0f} (baseline: {delta.get('baseline', 0):,.0f})"},
                 {"type": "mrkdwn", "text": f"*Classification:*\n{triage}"},
@@ -194,7 +195,7 @@ def _build_slack_blocks(state: AlertState) -> List[dict]:
             "text": {"type": "mrkdwn", "text": f"*Key Findings:*\n{findings_text}"},
         })
 
-    # Add top contributors
+    # Add top contributors (top 5)
     contributors = payload.get("contributors", [])
     if contributors:
         contrib_text = "\n".join(
@@ -206,7 +207,31 @@ def _build_slack_blocks(state: AlertState) -> List[dict]:
             "text": {"type": "mrkdwn", "text": f"*Top Contributors:*\n{contrib_text}"},
         })
 
-    # Add next steps
+    # Add geo breakdown
+    geo_breakdown = payload.get("geo_breakdown", [])
+    if geo_breakdown:
+        geo_text = "\n".join(
+            f"- {g.get('cluster', '?')}: {g.get('delta_pct', 0):+.1f}% ({g.get('quota_of_drop', 0):.0f}% of drop)"
+            for g in geo_breakdown
+        )
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Geo Breakdown:*\n{geo_text}"},
+        })
+
+    # Add environment split
+    env_split = payload.get("environment_split", {})
+    if env_split:
+        env_text = "\n".join(
+            f"- {env}: {data.get('delta_pct', 0):+.1f}% ({data.get('quota_of_drop', 0):.0f}% of drop)"
+            for env, data in env_split.items()
+        )
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Environment Split:*\n{env_text}"},
+        })
+
+    # Add next steps (top 3)
     next_steps = insights.get("next_steps", [])
     if next_steps:
         steps_text = "\n".join(f"- {s}" for s in next_steps[:3])
@@ -215,6 +240,7 @@ def _build_slack_blocks(state: AlertState) -> List[dict]:
             "text": {"type": "mrkdwn", "text": f"*Next Steps:*\n{steps_text}"},
         })
 
+    # Context footer
     blocks.append({
         "type": "context",
         "elements": [
@@ -222,17 +248,151 @@ def _build_slack_blocks(state: AlertState) -> List[dict]:
         ],
     })
 
+    # Action button
+    blocks.append({
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {"type": "plain_text", "text": "View in Dashboard"},
+                "url": f"https://sentinel.adkaora.com/alerts/{alert_id}",
+            },
+        ],
+    })
+
+    return blocks
+
+
+def _build_slack_blocks_p1(state: AlertState) -> List[dict]:
+    """Build medium Slack Block Kit message for P1 alerts."""
+    payload = state.get("alert_payload", {})
+    severity = payload.get("severity", "P1")
+    emoji = SEVERITY_EMOJI.get(severity, "")
+    delta = payload.get("revenue", {})
+    triage = payload.get("triage_label", "UNKNOWN")
+    alert_id = payload.get("alert_id", "N/A")
+
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f"{emoji} {severity} Alert: Revenue {delta.get('delta_pct', 0):+.1f}% | {payload.get('channel_group', 'GOOGLE')}",
+            },
+        },
+        {
+            "type": "section",
+            "fields": [
+                {"type": "mrkdwn", "text": f"*Alert ID:*\n{alert_id}"},
+                {"type": "mrkdwn", "text": f"*Rule:*\n{payload.get('alert_rule', 'A1')}"},
+                {"type": "mrkdwn", "text": f"*Revenue:*\nEUR {delta.get('current', 0):,.0f} (baseline: {delta.get('baseline', 0):,.0f})"},
+                {"type": "mrkdwn", "text": f"*Classification:*\n{triage}"},
+            ],
+        },
+    ]
+
+    # Add top contributors (top 3 only)
+    contributors = payload.get("contributors", [])
+    if contributors:
+        contrib_text = "\n".join(
+            f"- {c.get('display_name', c.get('publisher_id', '?'))}: {c.get('delta_pct', 0):+.1f}%"
+            for c in contributors[:3]
+        )
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Top Contributors:*\n{contrib_text}"},
+        })
+
+    # Add next steps (top 2)
+    insights = payload.get("insights", {})
+    next_steps = insights.get("next_steps", [])
+    if next_steps:
+        steps_text = "\n".join(f"- {s}" for s in next_steps[:2])
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Next Steps:*\n{steps_text}"},
+        })
+
+    # Context footer
+    blocks.append({
+        "type": "context",
+        "elements": [
+            {"type": "mrkdwn", "text": f"Confidence: {insights.get('diagnosis_confidence', 'medium')} | Source: {payload.get('data_source', 'synthetic')} | {payload.get('timestamp', '')}"},
+        ],
+    })
+
+    # Action button
+    blocks.append({
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {"type": "plain_text", "text": "View Details"},
+                "url": f"https://sentinel.adkaora.com/alerts/{alert_id}",
+            },
+        ],
+    })
+
+    return blocks
+
+
+def _build_slack_blocks_p2(state: AlertState) -> List[dict]:
+    """Build compact single-line Slack Block Kit message for P2 alerts."""
+    payload = state.get("alert_payload", {})
+    severity = payload.get("severity", "P2")
+    emoji = SEVERITY_EMOJI.get(severity, "")
+    delta_pct = payload.get("revenue", {}).get("delta_pct", 0)
+    channel = payload.get("channel_group", "GOOGLE")
+    triage = payload.get("triage_label", "UNKNOWN")
+    alert_id = payload.get("alert_id", "N/A")
+
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"{emoji} *{severity}*: Revenue {delta_pct:+.1f}% | {channel} | {triage} | Alert: `{alert_id}`",
+            },
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "View Details"},
+                    "url": f"https://sentinel.adkaora.com/alerts/{alert_id}",
+                },
+            ],
+        },
+    ]
+
     return blocks
 
 
 def _send_slack(state: AlertState) -> bool:
-    """Send alert to Slack webhook with retry and exponential backoff."""
+    """Send alert to Slack webhook with retry and exponential backoff.
+
+    Selects appropriate Block Kit template based on severity:
+    - P0: Full report with geo, env, findings, next steps
+    - P1: Medium report with top 3 contributors, top 2 next steps
+    - P2: Compact single-line format
+    """
     webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if not webhook_url:
         logger.info("Slack webhook not configured, skipping")
         return False
 
-    blocks = _build_slack_blocks(state)
+    # Select template based on severity
+    payload = state.get("alert_payload", {})
+    severity = payload.get("severity", "P1")
+
+    if severity == "P0":
+        blocks = _build_slack_blocks_p0(state)
+    elif severity == "P1":
+        blocks = _build_slack_blocks_p1(state)
+    else:
+        blocks = _build_slack_blocks_p2(state)
+
     payload_json = json.dumps({"blocks": blocks}).encode("utf-8")
 
     max_retries = 3
