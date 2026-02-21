@@ -1701,13 +1701,15 @@ docker compose up -d              # .env con ENVIRONMENT=production + OAuth
 
       {/* CONFIG */}
       <Section id="config" icon={Settings} title="Configurazione (alerting_rules.yaml)" open={openSections.has('config')} onToggle={toggle}>
-        <p className="mb-4">File: <code className="rounded bg-gray-100 px-1 text-xs">config/alerting_rules.yaml</code>. Tutte le soglie e i parametri del sistema.</p>
+        <p className="mb-4">File: <code className="rounded bg-gray-100 px-1 text-xs">config/alerting_rules.yaml</code>. Tutte le soglie e i parametri del sistema. <strong>v1.1</strong> include 9 nuove sezioni config aggiunte in Phases 1-4.</p>
+
+        <h4 className="mb-3 mt-4 font-semibold text-gray-900">Sezioni Core (v1.0)</h4>
         <CodeBlock>{`revenue_anomaly:        # Regola A1 - soglie drop
   P0: {drop_percent: -15, duration_hours: 2}
   P1: {drop_percent: -10, duration_hours: 2}
   P2: {drop_percent: -5,  duration_hours: 4}
 
-drift_detection:        # Regola A2 - drift settimanale
+drift_detection:        # Regola A2 - drift settimanale (fallback)
   enabled: true
   window_days: 7
   threshold_percent: -8
@@ -1736,7 +1738,7 @@ geo_clusters:           # Mapping country → cluster
   OTHER: [BR, MX, AR, PT, CO, CL, PE, US, UK, FR, DE]
 
 scheduling:
-  interval_hours: 2               # A1+A3 ogni 2h, A2 ogni 6h (3x)
+  interval_hours: 2               # A1+A3+A5+A6+A7 ogni 2h, A2 ogni 6h
   recheck_interval_minutes: 5     # Recheck queue ogni 5min
   channels: [GOOGLE, OPEN_BIDDING]
 
@@ -1745,20 +1747,125 @@ data_sources:
   athena_retry_count: 1          # 2 tentativi totali
   cache_ttl_hours: 24
 
-notifications:
-  slack_enabled: true
-  email_enabled: true
-
 top_publishers:         # 36 publisher monitorati
   - vocento
   - prensaiberica
   - mondadori
   # ... (36 totali)`}</CodeBlock>
 
-        <div className="mt-3 rounded-lg bg-blue-50 p-3">
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 1: Drift Regression <Badge color="purple">New</Badge></h4>
+        <CodeBlock>{`drift_regression:       # A2 drift con regressione lineare (runs before 7d fallback)
+  enabled: true
+  window_days_min: 14           # Minimo giorni per regression
+  window_days_max: 30           # Massimo giorni per regression
+  slope_threshold_percent_per_day: -2.0   # Trigger se slope ≤ -2%/giorno
+  cumulative_drop_threshold_percent: -15.0  # AND drop cumulativo ≥ -15%
+  min_data_points: 10           # Minimo data points richiesti`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Regression lineare 14-30gg per rilevare trend graduali. Trigger solo con fit statisticamente significativo (R² ≥ 0.5, p &lt; 0.05).
+          Fallback a 7-day drift se regression non triggerizza.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 1: Comparative Alerting <Badge color="purple">New</Badge></h4>
+        <CodeBlock>{`comparative_alerting:
+  yesterday_comparison:
+    enabled: true
+    threshold_percent: -30        # Alert se -30% vs ieri
+    severity_mapping:
+      below_minus_10: P2
+      below_minus_20: P1
+      below_minus_30: P0
+  moving_average_14d:
+    enabled: true
+    divergence_threshold_percent: -25   # Alert se -25% vs MA 14d
+    severity: P1
+    sustained_hours: 3            # Deve persistere 3h`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Confronto ieri (same-hour) + media mobile 14gg (same-weekday). Allineato alle pratiche operative TAM&amp;Yield.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 1: Weekend Schedule <Badge color="purple">New</Badge></h4>
+        <CodeBlock>{`scheduling:
+  weekend_schedule:
+    enabled: true
+    times_per_day: 2
+    run_hours: [10, 18]           # CronTrigger Sab/Dom 10:00 e 18:00 UTC`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Scheduling ridotto weekend (2x/giorno invece di ogni 2h) per ridurre carico ops.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 1: Dual Thresholds <Badge color="purple">New</Badge></h4>
+        <CodeBlock>{`dual_thresholds:
+  enabled: true
+  attention_severity: P2-WATCH
+  operational:                    # Soglie operative (action required)
+    revenue_drop_percent: -30
+    yesterday_delta_percent: -30
+    ma_14d_divergence_percent: -25
+  attention:                      # Soglie attenzione (monitoring)
+    revenue_drop_percent: -15
+    yesterday_delta_percent: -15
+    ma_14d_divergence_percent: -12`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Sistema doppia soglia — operativo (P0/P1/P2) vs attenzione (P2-WATCH). Distingue urgenze da segnali di monitoraggio.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 2: Margin/eCPM Alert (A5) <Badge color="blue">New</Badge></h4>
+        <CodeBlock>{`margin_alert:
+  enabled: true
+  ecpm_drop_thresholds:
+    P1:
+      drop_percent: -25           # P1 se eCPM ≤ -25%
+      duration_hours: 3
+    P2:
+      drop_percent: -15           # P2 se eCPM ≤ -15%
+      duration_hours: 4
+  min_impressions: 1000           # Filtra ore low-traffic
+  baseline_weeks: 7`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Rileva deterioramento pricing (eCPM drop). Soglie più lenient di revenue (-25%/-15%) per volatilità eCPM.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 2: Coverage Zero Alert (A6) <Badge color="blue">New</Badge></h4>
+        <CodeBlock>{`coverage_zero_alert:
+  enabled: true
+  coverage_threshold: 0.001       # 0.1% - cattura near-zero
+  min_bacino: 100                 # Filtra low-traffic
+  consecutive_hours: 2
+  baseline_weeks: 7
+  severity: P1                    # Sempre P1 (complete coverage loss)`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Rileva coverage azzerata/quasi-zero. Sempre P1 (coverage loss = revenue stop immediato). Triage dedicato: GOOGLE_POLICY, MCM_CONFIG, ADS_TXT, TECHNICAL_ISSUE.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 2: Pricing Rule Alert (A7) <Badge color="blue">New</Badge></h4>
+        <CodeBlock>{`pricing_rule_alert:
+  enabled: true
+  correlation_strength: -0.7      # Trigger se correlation ≤ -0.7
+  coverage_drop_threshold: -15
+  cpm_spike_threshold: 20
+  min_impressions: 500            # Più basso di A5 (500 vs 1000)
+  baseline_weeks: 7
+  severity: P1                    # Sempre P1 (pricing error)`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Rileva errori pricing rule (coverage↓ + CPM↑ correlati negativamente). Sempre P1 poiché causa revenue loss immediato.
+        </p>
+
+        <h4 className="mb-3 mt-5 font-semibold text-gray-900">Phase 4: Slack Notifications <Badge color="green">New</Badge></h4>
+        <CodeBlock>{`slack_notifications:
+  webhook_url: "https://hooks.slack.com/services/..."  # Set via admin UI
+  channel: "sentinel-alerts"
+  immediate_severities: ["P0"]             # Invio immediato
+  digest_severities: ["P1", "P2"]          # Daily digest
+  digest_time_utc: "08:00"                 # 08:00 UTC`}</CodeBlock>
+        <p className="mt-2 text-xs text-gray-600">
+          <strong>Scopo:</strong> Config webhook Slack e routing notifiche. P0 immediato, P1/P2 in digest giornaliero. Gestito via <code className="rounded bg-gray-100 px-1 text-xs">PUT /api/admin/slack-config</code>.
+        </p>
+
+        <div className="mt-4 rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
             <strong>Hot reload:</strong> il config viene riletto ad ogni ciclo di alerting. Modificare il YAML e il prossimo
-            ciclo usera' i nuovi valori. Non serve restart del server.
+            ciclo usera' i nuovi valori. Non serve restart del server (eccetto slack_notifications che richiede restart per webhook URL changes).
           </p>
         </div>
       </Section>
