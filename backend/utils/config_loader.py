@@ -30,6 +30,15 @@ class DriftDetectionConfig(BaseModel):
     threshold_percent: float
 
 
+class DriftRegressionConfig(BaseModel):
+    enabled: bool
+    window_days_min: int
+    window_days_max: int
+    slope_threshold_percent_per_day: float
+    cumulative_drop_threshold_percent: float
+    min_data_points: int
+
+
 class NearZeroConfig(BaseModel):
     revenue_threshold_eur: float
     coverage_threshold: float
@@ -78,6 +87,7 @@ class AlertingConfig(BaseModel):
     data_gap: DataGapConfig
     revenue_anomaly: RevenueAnomalyConfig
     drift_detection: DriftDetectionConfig
+    drift_regression: DriftRegressionConfig
     near_zero: NearZeroConfig
     triage: TriageConfig
     top_contributors: TopContributorsConfig
