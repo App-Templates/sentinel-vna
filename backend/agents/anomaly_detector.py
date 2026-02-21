@@ -17,7 +17,9 @@ from datetime import timedelta
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
+from scipy import stats
 
 from backend.utils.config_loader import get_config
 from backend.utils.logger import get_logger
@@ -214,6 +216,108 @@ def _check_consecutive_a3(state: AlertState) -> bool:
     return True
 
 
+def _detect_linear_drift(state: AlertState) -> Optional[dict]:
+    """
+    Detect gradual revenue decline using linear regression on 14-30 day window.
+
+    Returns dict with drift analysis if significant trend detected:
+    {
+        "slope_pct_per_day": float,
+        "cumulative_drop_pct": float,
+        "r_squared": float,
+        "days_analyzed": int,
+        "projection_7d_pct": float,
+    }
+    Or None if drift not significant or data insufficient.
+    """
+    from backend.agents.data_fetcher_real import _fetch_drift_baseline
+
+    config = get_config()
+    dr = config.drift_regression
+
+    if not dr.enabled:
+        return None
+
+    current_ts = _parse_state_timestamp(state)
+    if current_ts is None:
+        return None
+
+    channel = state.get("channel_group", "GOOGLE")
+
+    # Try to fetch max window, fall back to min if data sparse
+    baseline_df = None
+    for window in range(dr.window_days_max, dr.window_days_min - 1, -1):
+        baseline_df = _fetch_drift_baseline(current_ts, channel, window)
+        if baseline_df is not None and len(baseline_df) >= dr.min_data_points:
+            break
+
+    if baseline_df is None or len(baseline_df) < dr.min_data_points:
+        logger.info(
+            "Drift regression skipped: insufficient data (need %d days, got %s)",
+            dr.min_data_points,
+            len(baseline_df) if baseline_df is not None else 0,
+        )
+        return None
+
+    # Prepare data for regression: X = day index (0, 1, 2...), Y = revenue
+    revenues = baseline_df["revenue"].values
+    days = np.arange(len(revenues))
+
+    # Linear regression: revenue = slope * day + intercept
+    slope, intercept, r_value, p_value, std_err = stats.linregress(days, revenues)
+
+    # Convert slope to percentage per day relative to mean revenue
+    mean_revenue = np.mean(revenues)
+    if mean_revenue <= 0:
+        return None
+
+    slope_pct_per_day = (slope / mean_revenue) * 100.0
+
+    # Calculate cumulative drop percentage over the window
+    # cumulative_pct = slope_pct_per_day * days_analyzed
+    days_analyzed = len(revenues)
+    cumulative_drop_pct = slope_pct_per_day * days_analyzed
+
+    # Check significance
+    r_squared = r_value ** 2
+
+    # Only trigger if:
+    # 1. Slope is negative and exceeds threshold
+    # 2. Cumulative drop exceeds threshold
+    # 3. R² > 0.5 (reasonable linear fit)
+    is_significant = (
+        slope_pct_per_day <= dr.slope_threshold_percent_per_day
+        and cumulative_drop_pct <= dr.cumulative_drop_threshold_percent
+        and r_squared >= 0.5
+        and p_value < 0.05
+    )
+
+    if not is_significant:
+        logger.info(
+            "Drift regression: trend not significant (slope=%.2f%%/day, "
+            "cumulative=%.1f%%, R²=%.3f, p=%.4f)",
+            slope_pct_per_day, cumulative_drop_pct, r_squared, p_value,
+        )
+        return None
+
+    # Project 7 days forward to show where it's heading
+    projection_7d_pct = slope_pct_per_day * 7
+
+    logger.info(
+        "Drift regression ALERT: slope=%.2f%%/day over %d days, "
+        "cumulative=%.1f%%, R²=%.3f, 7d projection=%.1f%%",
+        slope_pct_per_day, days_analyzed, cumulative_drop_pct, r_squared, projection_7d_pct,
+    )
+
+    return {
+        "slope_pct_per_day": round(slope_pct_per_day, 2),
+        "cumulative_drop_pct": round(cumulative_drop_pct, 1),
+        "r_squared": round(r_squared, 3),
+        "days_analyzed": days_analyzed,
+        "projection_7d_pct": round(projection_7d_pct, 1),
+    }
+
+
 def _load_prompt_template() -> str:
     """Load the prompt template from file."""
     try:
@@ -299,10 +403,29 @@ def _statistical_fallback(state: AlertState) -> AlertState:
                     "execution_errors": list(state.get("execution_errors", [])),
                 }
 
-    # A2: Drift check
+    # A2: Drift check (existing 7-day logic PLUS new linear regression)
     if trigger == "A2":
         drift_pct = delta.get("drift_7d_pct", 0)
         drift_thresh = config.drift_detection.threshold_percent
+
+        # First try linear regression drift detection
+        drift_regression = _detect_linear_drift(state)
+
+        if drift_regression is not None:
+            # Regression detected significant gradual decline
+            # Store regression results in state for report_builder to use
+            return {
+                **state,
+                "alert_triggered": True,
+                "alert_rule": "A2",
+                "severity": "P1",  # Gradual declines are P1
+                "z_score": rev_zscore,
+                "confidence": 0.85,  # High confidence from regression fit
+                "drift_regression": drift_regression,
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+
+        # Fall back to existing 7-day drift logic if regression didn't trigger
         if drift_pct <= drift_thresh:
             severity = "P1" if drift_pct <= drift_thresh * 1.5 else "P2"
             return {
