@@ -54,7 +54,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
 
     if (!trimmed.endsWith(ALLOWED_DOMAIN)) {
-      setError('Accesso consentito solo per email @adkaora.com')
+      setError('Email non autorizzata')
       return
     }
 
@@ -95,7 +95,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError('') }}
-                placeholder="nome.cognome@adkaora.com"
+                placeholder="inserisci la tua email"
                 autoFocus
                 autoComplete="email"
                 className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-3 text-sm text-white placeholder-gray-400 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -116,7 +116,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-gray-500">
-            Accesso riservato al team Adkaora
+            Accesso riservato
           </p>
         </div>
       </div>
