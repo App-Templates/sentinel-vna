@@ -20,7 +20,7 @@ import {
   Server,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
-// import { useAuthContext } from '../auth/AuthGuard'
+import { useAuthContext } from '../auth/AuthGuard'
 
 interface NavItem {
   to: string
@@ -123,8 +123,7 @@ function NavGroupItem({ group, collapsed, pathname }: { group: NavGroup; collaps
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
-  const user = { email: 'demo@adkaora.com', name: 'Demo', picture: '' }
-  const logout = () => {}
+  const { user, logout } = useAuthContext()
   const location = useLocation()
 
   const showUser = user && user.email !== 'dev@localhost'

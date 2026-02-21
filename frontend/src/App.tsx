@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate, Link } from 'react-router-dom'
-// AuthGuard disabled for demo deployment — stakeholders need direct access
-// import { AuthGuard } from './components/auth/AuthGuard'
+import { AuthGuard } from './components/auth/AuthGuard'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { AlertDetailPage } from './pages/AlertDetailPage'
@@ -26,7 +25,7 @@ function NotFoundPage() {
 
 export default function App() {
   return (
-    <>
+    <AuthGuard>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -47,6 +46,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
-    </>
+    </AuthGuard>
   )
 }
