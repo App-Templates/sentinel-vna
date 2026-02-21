@@ -20,7 +20,7 @@
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Alerting Evoluto** - Extend anomaly_detector agent with drift regression, add yesterday/14d comparisons, calibrate dual thresholds, enable weekend scheduling
+- [x] **Phase 1: Alerting Evoluto** - Extend anomaly_detector agent with drift regression, add yesterday/14d comparisons, calibrate dual thresholds, enable weekend scheduling (completed 2026-02-21)
 - [ ] **Phase 2: Nuovi Tipi Alert** - Add A5 (margin), A6 (coverage-zero), A7 (pricing-rule) alert rules to existing pipeline
 - [ ] **Phase 3: Operator Workflow** - Add feedback/assignment UI to existing alert detail page, add intervention tracking with new DB tables
 - [ ] **Phase 4: Notifiche Slack** - Activate existing notifier agent with real Slack webhook, add severity-based templates and daily digest
@@ -114,7 +114,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Alerting Evoluto | 0/? | Not started | - |
+| 1. Alerting Evoluto | 0/? | Complete    | 2026-02-21 |
 | 2. Nuovi Tipi Alert | 0/? | Not started | - |
 | 3. Operator Workflow | 0/? | Not started | - |
 | 4. Notifiche Slack | 0/? | Not started | - |
