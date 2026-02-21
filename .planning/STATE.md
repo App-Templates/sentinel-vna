@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 4 of 6 (Notifiche Slack)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-02-21 — Plan 04-01 (Slack Configuration Admin UI) completed
+Last activity: 2026-02-21 — Plan 04-02 (Severity-Based Notification Routing) completed
 
-Progress: [████████░░] 50%
+Progress: [████████░░] 52%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 0.15 hours
-- Total execution time: 1.68 hours
+- Total plans completed: 12
+- Average duration: 0.14 hours
+- Total execution time: 1.73 hours
 
 **By Phase:**
 
@@ -38,6 +38,8 @@ Progress: [████████░░] 50%
 *Updated after each plan completion*
 | Phase 03 P04 | 0.12 | 5 tasks | 9 files |
 | Phase 04 P01 | 0.07 | 3 tasks | 5 files |
+| Phase 04 P02 | 0.05 | 3 tasks | 3 files |
+| Phase 04 P02 | 0.05 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -97,6 +99,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Slack configuration stored in alerting_rules.yaml for consistency with other alert rules
 - [Phase 04]: Three-endpoint pattern (GET/PUT/TEST) for Slack admin config management
 - [Phase 04]: Immediate vs digest severity separation for flexible notification routing
+- [Phase 04-02]: pending_notifications table accumulates P1/P2 alerts for daily digest with created_at index
+- [Phase 04-02]: Three Block Kit templates provide different detail levels based on severity (P0 full, P1 medium, P2 compact)
+- [Phase 04-02]: delivery_status distinguishes slack_sent (immediate) vs slack_queued (digest) for observability
 
 ### Pending Todos
 
@@ -114,5 +119,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 04-01-PLAN.md (Slack Configuration Admin UI)
-Resume file: .planning/phases/04-notifiche-slack/04-01-SUMMARY.md
+Stopped at: Completed 04-02-PLAN.md (Severity-Based Notification Routing)
+Resume file: .planning/phases/04-notifiche-slack/04-02-SUMMARY.md
