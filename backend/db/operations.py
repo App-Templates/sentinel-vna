@@ -13,6 +13,7 @@ from backend.db.models import (
     AlertModel,
     AlertStatus,
     EventType,
+    ManualInterventionModel,
     RecheckQueueModel,
     RecheckStatus,
 )
@@ -511,3 +512,103 @@ def get_alert_assignment(alert_id: str) -> Optional[dict[str, Any]]:
         ).fetchone()
 
     return _row_to_dict(row) if row else None
+
+
+# ---------------------------------------------------------------------------
+# Manual Interventions
+# ---------------------------------------------------------------------------
+
+def create_intervention(intervention: ManualInterventionModel) -> int:
+    """Create a manual intervention record.
+
+    Returns the intervention_id of the created entry.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            """INSERT INTO manual_interventions (
+                   timestamp, publisher_id, intervention_type, description,
+                   value_before, value_after, user_id, created_at
+               )
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                intervention.timestamp.isoformat(),
+                intervention.publisher_id,
+                intervention.intervention_type.value,
+                intervention.description,
+                intervention.value_before,
+                intervention.value_after,
+                intervention.user_id,
+                intervention.created_at.isoformat(),
+            ),
+        )
+        intervention_id = cursor.lastrowid
+
+    logger.info(
+        "Created intervention %d: type=%s, publisher=%s, user=%s",
+        intervention_id, intervention.intervention_type.value,
+        intervention.publisher_id, intervention.user_id,
+    )
+    return intervention_id
+
+
+def link_intervention_to_alert(alert_id: str, intervention_id: int, user_id: str) -> int:
+    """Link an intervention to an alert.
+
+    Returns the link_id of the created junction record.
+    """
+    now = datetime.utcnow().isoformat()
+    with get_db() as conn:
+        cursor = conn.execute(
+            """INSERT INTO alert_intervention_links (alert_id, intervention_id, linked_at)
+               VALUES (?, ?, ?)""",
+            (alert_id, intervention_id, now),
+        )
+        link_id = cursor.lastrowid
+
+    logger.info(
+        "Linked intervention %d to alert %s by user %s",
+        intervention_id, alert_id, user_id,
+    )
+    return link_id
+
+
+def get_interventions_for_period(
+    start_datetime: datetime,
+    end_datetime: datetime,
+    publisher_id: Optional[str] = None,
+) -> list[dict[str, Any]]:
+    """Get all interventions within a time period, optionally filtered by publisher.
+
+    Used by anomaly_detector to exclude intervention periods from baseline calculation.
+
+    Returns list of intervention dicts with all fields.
+    """
+    params: list[Any] = [start_datetime.isoformat(), end_datetime.isoformat()]
+    query = "SELECT * FROM manual_interventions WHERE timestamp >= ? AND timestamp <= ?"
+
+    if publisher_id is not None:
+        query += " AND publisher_id = ?"
+        params.append(publisher_id)
+
+    with get_db() as conn:
+        rows = conn.execute(query, params).fetchall()
+
+    return [_row_to_dict(r) for r in rows]
+
+
+def get_interventions_for_alert(alert_id: str) -> list[dict[str, Any]]:
+    """Get all interventions linked to a specific alert.
+
+    Returns list of intervention dicts via JOIN with alert_intervention_links.
+    """
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT mi.*
+               FROM manual_interventions mi
+               JOIN alert_intervention_links ail ON mi.intervention_id = ail.intervention_id
+               WHERE ail.alert_id = ?
+               ORDER BY mi.timestamp DESC""",
+            (alert_id,)
+        ).fetchall()
+
+    return [_row_to_dict(r) for r in rows]
