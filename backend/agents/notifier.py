@@ -33,6 +33,44 @@ _notification_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="n
 SEVERITY_EMOJI = {"P0": "\U0001f534", "P1": "\U0001f7e0", "P2": "\U0001f7e1"}
 
 
+def _should_send_immediate(severity: str, config) -> bool:
+    """Check if alert severity should trigger immediate Slack notification."""
+    try:
+        immediate_severities = config.slack_notifications.immediate_severities
+    except (AttributeError, TypeError):
+        # Default to P0 only if config missing
+        immediate_severities = ["P0"]
+    return severity in immediate_severities
+
+
+def _save_to_pending_notifications(state: AlertState) -> bool:
+    """Save alert to pending_notifications table for daily digest."""
+    payload = state.get("alert_payload", {})
+    if not payload:
+        logger.warning("No alert payload to save to pending notifications")
+        return False
+
+    try:
+        alert_id = payload.get("alert_id", "")
+        severity = payload.get("severity", "P1")
+        channel_group = payload.get("channel_group", "GOOGLE")
+        timestamp = payload.get("timestamp", "")
+        created_at = datetime.now(timezone.utc).isoformat()
+
+        with get_db() as conn:
+            conn.execute(
+                """INSERT INTO pending_notifications (
+                    alert_id, severity, channel_group, timestamp, created_at
+                ) VALUES (?, ?, ?, ?, ?)""",
+                (alert_id, severity, channel_group, timestamp, created_at),
+            )
+        logger.info("Alert saved to pending notifications: %s", alert_id)
+        return True
+    except Exception as e:
+        logger.error("Failed to save to pending_notifications: %s", e)
+        return False
+
+
 def _save_to_db(state: AlertState) -> bool:
     """Save alert to SQLite database. In LIVE mode, dedup against existing open alerts."""
     payload = state.get("alert_payload", {})
@@ -297,15 +335,19 @@ def notifier_agent(state: AlertState) -> AlertState:
     """
     Main entry point for notifications.
     - Saves to SQLite (synchronous -- critical path)
-    - Sends to Slack and Email in parallel via ThreadPoolExecutor
+    - Routes Slack notifications based on severity: immediate (P0) vs digest (P1/P2)
+    - Sends email in parallel via ThreadPoolExecutor
       so that time.sleep() retries do NOT block the main LangGraph thread.
     """
     logger.info("Notifier started | alert=%s", state.get("alert_payload", {}).get("alert_id", "N/A"))
     errors = list(state.get("execution_errors", []))
+    payload = state.get("alert_payload", {})
+    severity = payload.get("severity", "P1")
 
     delivery_status = {
         "db_saved": False,
         "slack_sent": False,
+        "slack_queued": False,
         "email_sent": False,
     }
 
@@ -316,7 +358,7 @@ def notifier_agent(state: AlertState) -> AlertState:
         logger.error("DB save failed: %s", e)
         errors.append(f"DB save failed: {e}")
 
-    # 2. Dispatch Slack & Email to thread pool (non-blocking)
+    # 2. Load config for notification routing
     try:
         config = get_config()
     except Exception:
@@ -324,13 +366,24 @@ def notifier_agent(state: AlertState) -> AlertState:
 
     futures = {}
 
+    # 3. Route Slack based on severity
     if config and config.notifications.slack_enabled:
-        futures["slack"] = _notification_executor.submit(_send_slack, state)
+        if _should_send_immediate(severity, config):
+            logger.info("Sending immediate notification for %s alert", severity)
+            futures["slack"] = _notification_executor.submit(_send_slack, state)
+        else:
+            logger.info("Saved %s alert to pending notifications for daily digest", severity)
+            try:
+                delivery_status["slack_queued"] = _save_to_pending_notifications(state)
+            except Exception as e:
+                logger.error("Failed to queue notification: %s", e)
+                errors.append(f"Notification queue failed: {e}")
 
+    # 4. Dispatch Email to thread pool (non-blocking)
     if config and config.notifications.email_enabled:
         futures["email"] = _notification_executor.submit(_send_email, state)
 
-    # 3. Collect results with a timeout (max 30s total for both)
+    # 5. Collect results with a timeout (max 30s total for both)
     for name, future in futures.items():
         try:
             result = future.result(timeout=30)
@@ -347,9 +400,10 @@ def notifier_agent(state: AlertState) -> AlertState:
             errors.append(f"{name.capitalize()} notification failed: {e}")
 
     logger.info(
-        "Notifier complete: db=%s, slack=%s, email=%s",
+        "Notifier complete: db=%s, slack_sent=%s, slack_queued=%s, email=%s",
         delivery_status["db_saved"],
         delivery_status["slack_sent"],
+        delivery_status["slack_queued"],
         delivery_status["email_sent"],
     )
 
