@@ -75,11 +75,13 @@ Plans:
   3. Quando si visualizza un alert, il sistema mostra lo storico dei feedback precedenti sullo stesso publisher/pattern
   4. L'operatore puo registrare un intervento manuale in meno di 1 minuto (data, publisher, tipo, valore prima/dopo, motivo) e collegarlo a un alert
   5. I periodi con interventi manuali registrati vengono annotati/esclusi nella baseline degli alert futuri
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Feedback system (DB schema + backend API for REAL/FALSE_POSITIVE categories, comments, history)
+- [ ] 03-02-PLAN.md — Assignment system (DB schema + backend API for alert assignment with email validation)
+- [ ] 03-03-PLAN.md — Intervention tracking (DB schema + backend API + baseline exclusion logic)
+- [ ] 03-04-PLAN.md — Frontend UI (FeedbackPanel, InterventionPanel, assignment dropdown, filters)
 
 ### Phase 4: Notifiche Slack
 **Goal**: Gli alert arrivano direttamente su Slack con il livello di dettaglio giusto per la severity, senza che gli operatori debbano controllare la dashboard proattivamente
