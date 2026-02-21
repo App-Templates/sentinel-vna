@@ -28,9 +28,9 @@
 
 ### Interventi Manuali
 
-- [ ] **INTV-01**: L'operatore può registrare un intervento manuale tramite form rapido (< 1 minuto): data, publisher, tipo intervento, valore prima/dopo, motivo
-- [ ] **INTV-02**: L'operatore può collegare un alert a un intervento manuale registrato
-- [ ] **INTV-03**: Il sistema esclude/annota automaticamente i periodi con interventi manuali nella baseline degli alert
+- [x] **INTV-01**: L'operatore può registrare un intervento manuale tramite form rapido (< 1 minuto): data, publisher, tipo intervento, valore prima/dopo, motivo
+- [x] **INTV-02**: L'operatore può collegare un alert a un intervento manuale registrato
+- [x] **INTV-03**: Il sistema esclude/annota automaticamente i periodi con interventi manuali nella baseline degli alert
 
 ### Notifiche
 
@@ -87,9 +87,9 @@
 | FEED-02 | Phase 3 | Complete |
 | FEED-03 | Phase 3 | Complete |
 | FEED-04 | Phase 3 | Complete |
-| INTV-01 | Phase 3 | Pending |
-| INTV-02 | Phase 3 | Pending |
-| INTV-03 | Phase 3 | Pending |
+| INTV-01 | Phase 3 | Complete |
+| INTV-02 | Phase 3 | Complete |
+| INTV-03 | Phase 3 | Complete |
 | NOTF-01 | Phase 4 | Pending |
 | NOTF-02 | Phase 4 | Pending |
 | NOTF-03 | Phase 4 | Pending |

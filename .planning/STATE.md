@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 3 of 6 (Operator Workflow)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In Progress
-Last activity: 2026-02-21 — Plan 03-02 (Alert Assignment System) completed
+Last activity: 2026-02-21 — Plan 03-03 (Manual Intervention Tracking) completed
 
-Progress: [████████░░] 42%
+Progress: [████████░░] 46%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 0.16 hours
-- Total execution time: 1.60 hours
+- Total plans completed: 11
+- Average duration: 0.15 hours
+- Total execution time: 1.68 hours
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [████████░░] 42%
 |-------|-------|-------|----------|
 | 01 (Alerting Evoluto) | 4 | 1.25h | 0.31h |
 | 02 (Nuovi Tipi Alert) | 4 | 0.22h | 0.05h |
-| 03 (Operator Workflow) | 2 | 0.13h | 0.07h |
+| 03 (Operator Workflow) | 3 | 0.21h | 0.07h |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (0.05h), 02-04 (0.07h), 03-01 (0.05h), 03-02 (0.08h)
+- Last 5 plans: 02-04 (0.07h), 03-01 (0.05h), 03-02 (0.08h), 03-03 (0.08h)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -86,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 03-02]: UNIQUE constraint on alert_id enforces one assignment per alert
 - [Phase 03-02]: INSERT OR REPLACE pattern handles reassignment automatically
 - [Phase 03-02]: Email validation enforces @adkaora.com domain at schema level
+- [Phase 03-03]: Junction table pattern for alert-intervention many-to-many links
+- [Phase 03-03]: Timestamp-based baseline filtering excludes entire hour if intervention occurred
+- [Phase 03-03]: Global intervention filtering across all publishers (conservative approach to prevent baseline contamination)
 
 ### Pending Todos
 
@@ -103,5 +106,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-01-PLAN.md (Operator Feedback System)
-Resume file: .planning/phases/03-operator-workflow/03-01-SUMMARY.md
+Stopped at: Completed 03-03-PLAN.md (Manual Intervention Tracking)
+Resume file: .planning/phases/03-operator-workflow/03-03-SUMMARY.md
