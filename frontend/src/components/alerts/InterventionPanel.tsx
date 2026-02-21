@@ -102,7 +102,7 @@ export function InterventionPanel({ alert, publisherId }: InterventionPanelProps
         value_after: valueAfter.trim() || undefined,
       })
       clearForm()
-      alert('Intervention saved with ID: ' + result.intervention_id)
+      window.alert('Intervention saved with ID: ' + result.intervention_id)
     } catch (err) {
       console.error('Failed to create intervention:', err)
     }
@@ -134,7 +134,7 @@ export function InterventionPanel({ alert, publisherId }: InterventionPanelProps
 
   const validateForm = () => {
     if (!timestamp || !selectedPublisher || !interventionType || !description.trim()) {
-      alert('Please fill in all required fields (timestamp, publisher, type, description)')
+      window.alert('Please fill in all required fields (timestamp, publisher, type, description)')
       return false
     }
     return true
