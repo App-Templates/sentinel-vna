@@ -30,6 +30,18 @@ drift_regression:
   cumulative_drop_threshold_percent: -15.0
   min_data_points: 10
 
+dual_thresholds:
+  enabled: true
+  operational:
+    revenue_drop_percent: -30
+    yesterday_delta_percent: -30
+    ma_14d_divergence_percent: -25
+  attention:
+    revenue_drop_percent: -15
+    yesterday_delta_percent: -15
+    ma_14d_divergence_percent: -12
+  attention_severity: P2-WATCH
+
 near_zero:
   revenue_threshold_eur: 100
   coverage_threshold: 0.05
@@ -105,6 +117,10 @@ scheduling:
   channels:
     - GOOGLE
     - OPEN_BIDDING
+  weekend_schedule:
+    enabled: true
+    times_per_day: 2  # Run 2x/day on weekends (vs 12x weekday)
+    run_hours: [10, 18]  # Run at 10:00 and 18:00 UTC on Sat/Sun
 
 data_sources:
   athena_timeout_seconds: 30
