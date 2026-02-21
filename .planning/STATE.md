@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 2 - Nuovi Tipi Alert (completed)
+**Current focus:** Phase 3 - Operator Workflow (in progress)
 
 ## Current Position
 
-Phase: 2 of 6 (Nuovi Tipi Alert)
-Plan: 4 of 4 in current phase (COMPLETE)
-Status: Phase Complete
-Last activity: 2026-02-21 — Plan 02-04 (Frontend A5/A6/A7 Visualization) completed
+Phase: 3 of 6 (Operator Workflow)
+Plan: 1 of 4 in current phase
+Status: In Progress
+Last activity: 2026-02-21 — Plan 03-01 (Operator Feedback System) completed
 
-Progress: [██████░░░░] 33%
+Progress: [███████░░░] 37%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 0.18 hours
-- Total execution time: 1.47 hours
+- Total plans completed: 9
+- Average duration: 0.17 hours
+- Total execution time: 1.52 hours
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [██████░░░░] 33%
 |-------|-------|-------|----------|
 | 01 (Alerting Evoluto) | 4 | 1.25h | 0.31h |
 | 02 (Nuovi Tipi Alert) | 4 | 0.22h | 0.05h |
+| 03 (Operator Workflow) | 1 | 0.05h | 0.05h |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (0.03h), 02-02 (0.07h), 02-03 (0.05h), 02-04 (0.07h)
+- Last 5 plans: 02-02 (0.07h), 02-03 (0.05h), 02-04 (0.07h), 03-01 (0.05h)
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -76,6 +77,12 @@ Recent decisions affecting current work:
 - [02-04]: eCPM display in RevenueStatusSection (not new section) since margin is revenue-related
 - [02-04]: Coverage-zero and pricing-rule panels in TriageSection since they extend triage diagnosis
 - [02-04]: Helper functions for cause labels/descriptions kept local to TriageSection
+- [Phase 03-01]: 6-category feedback taxonomy (REAL + 5 FALSE_POSITIVE variants) covers all common false positive root causes
+- [Phase 03-01]: Automatic publisher_id extraction from alert contributors enables historical tracking without frontend complexity
+- [Phase 03-01]: Publisher feedback history includes alert context (JOIN with alerts) for pattern analysis
+- [Phase 03-01]: 6-category feedback taxonomy (REAL + 5 FALSE_POSITIVE variants) covers all common false positive root causes
+- [Phase 03-01]: Automatic publisher_id extraction from alert contributors enables historical tracking without frontend complexity
+- [Phase 03-01]: Publisher feedback history includes alert context (JOIN with alerts) for pattern analysis
 
 ### Pending Todos
 
@@ -93,5 +100,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-04-PLAN.md (Frontend A5/A6/A7 Visualization) — Phase 2 COMPLETE
-Resume file: .planning/phases/02-nuovi-tipi-alert/02-04-SUMMARY.md
+Stopped at: Completed 03-01-PLAN.md (Operator Feedback System)
+Resume file: .planning/phases/03-operator-workflow/03-01-SUMMARY.md
