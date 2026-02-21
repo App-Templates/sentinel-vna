@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from backend.db.models import ChannelGroup, RecheckStatus
@@ -79,9 +80,17 @@ async def _run_trigger_for_channels(trigger_type: str, channels: list) -> None:
 
 
 async def run_alerting_cycle() -> None:
-    """A1 + A3 cycle — runs every 2h (interval_hours from config)."""
+    """A1 + A3 cycle — runs every 2h (interval_hours from config). Weekdays only if weekend schedule enabled."""
     try:
         config = get_config()
+
+        # Skip on weekends if weekend schedule is active
+        if config.scheduling.weekend_schedule.enabled:
+            weekday = datetime.utcnow().weekday()
+            if weekday in (5, 6):
+                logger.info("Skipping weekday alerting cycle (weekend schedule active)")
+                return
+
         channels = config.scheduling.channels
         logger.info("Starting A1+A3 alerting cycle for channels: %s", channels)
 
@@ -141,6 +150,31 @@ async def check_recheck_queue() -> None:
         logger.error("Recheck queue error: %s", exc, exc_info=True)
 
 
+async def weekend_alerting_cycle() -> None:
+    """
+    Weekend alerting cycle — runs 2x/day on Saturday and Sunday.
+    Executes A1+A3 only (A2 drift runs on its regular 6h schedule).
+    """
+    try:
+        config = get_config()
+        channels = config.scheduling.channels
+
+        # Double-check we're actually on weekend
+        weekday = datetime.utcnow().weekday()  # 5=Sat, 6=Sun
+        if weekday not in (5, 6):
+            logger.warning("Weekend cycle triggered on non-weekend day (weekday=%d)", weekday)
+            return
+
+        logger.info("Starting WEEKEND alerting cycle (2x/day) for channels: %s", channels)
+
+        await _run_trigger_for_channels("A1", channels)
+        await _run_trigger_for_channels("A3", channels)
+
+        logger.info("Weekend alerting cycle finished")
+    except Exception as exc:
+        logger.error("Weekend alerting cycle error: %s", exc, exc_info=True)
+
+
 def start_scheduler() -> None:
     scheduler = _get_scheduler()
     if scheduler.running:
@@ -176,12 +210,33 @@ def start_scheduler() -> None:
         replace_existing=True,
     )
 
+    # Weekend schedule: 2x/day on Sat/Sun at configured hours
+    if config.scheduling.weekend_schedule.enabled:
+        for hour in config.scheduling.weekend_schedule.run_hours:
+            scheduler.add_job(
+                weekend_alerting_cycle,
+                trigger=CronTrigger(
+                    day_of_week='sat,sun',
+                    hour=hour,
+                    minute=0,
+                    timezone='UTC',
+                ),
+                id=f"weekend_cycle_{hour:02d}h",
+                name=f"Weekend A1+A3 cycle at {hour:02d}:00 UTC",
+                replace_existing=True,
+            )
+            logger.info("Added weekend job: run at %02d:00 UTC on Sat/Sun", hour)
+
     scheduler.start()
+    weekend_info = ""
+    if config.scheduling.weekend_schedule.enabled:
+        weekend_info = f", weekend {len(config.scheduling.weekend_schedule.run_hours)}x/day at {config.scheduling.weekend_schedule.run_hours}"
     logger.info(
-        "Scheduler started: A1+A3 every %dh, A2 drift every %dh, rechecks every %dm",
+        "Scheduler started: A1+A3 every %dh, A2 drift every %dh, rechecks every %dm%s",
         config.scheduling.interval_hours,
         drift_interval_hours,
         config.scheduling.recheck_interval_minutes,
+        weekend_info,
     )
 
 
