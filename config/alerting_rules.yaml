@@ -1,5 +1,5 @@
-version: "1.1.2"
-last_updated: "2026-02-21T14:45:00Z"
+version: "1.1.3"
+last_updated: "2026-02-21T14:50:00Z"
 
 data_gap:
   enabled: true
@@ -75,6 +75,15 @@ coverage_zero_alert:
   consecutive_hours: 2  # Must be zero for 2+ consecutive hours to trigger
   severity: P1  # Coverage-zero is always critical
   baseline_weeks: 7  # Compare to 7-week same-hour baseline
+
+pricing_rule_alert:
+  enabled: true
+  coverage_drop_threshold: -15  # Coverage must drop at least 15%
+  cpm_spike_threshold: 20  # eCPM must increase at least 20%
+  correlation_strength: -0.7  # Pearson correlation coefficient (negative = inverse correlation)
+  severity: P1  # Pricing rule issues are critical
+  min_impressions: 500  # Minimum impressions for reliable eCPM calculation
+  baseline_weeks: 7
 
 near_zero:
   revenue_threshold_eur: 100
