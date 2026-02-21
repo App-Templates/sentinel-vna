@@ -25,6 +25,7 @@ class AlertRule(str, Enum):
     A2 = "A2"
     A3 = "A3"
     A5 = "A5"  # Margin/eCPM drop
+    A6 = "A6"  # Coverage zero
 
 
 class ChannelGroup(str, Enum):
@@ -123,7 +124,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     severity TEXT NOT NULL CHECK(severity IN ('P0', 'P1', 'P2')),
     channel_group TEXT NOT NULL CHECK(channel_group IN ('GOOGLE', 'OPEN_BIDDING')),
     status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'ACK', 'RESOLVED', 'SNOOZED')),
-    alert_rule TEXT NOT NULL CHECK(alert_rule IN ('A0', 'A1', 'A2', 'A3', 'A5')),
+    alert_rule TEXT NOT NULL CHECK(alert_rule IN ('A0', 'A1', 'A2', 'A3', 'A5', 'A6')),
     revenue_current REAL NOT NULL,
     revenue_baseline REAL NOT NULL,
     revenue_delta_pct REAL NOT NULL,

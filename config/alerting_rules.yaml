@@ -1,5 +1,5 @@
-version: "1.1.1"
-last_updated: "2026-02-21T14:44:00Z"
+version: "1.1.2"
+last_updated: "2026-02-21T14:45:00Z"
 
 data_gap:
   enabled: true
@@ -67,6 +67,14 @@ margin_alert:
       duration_hours: 4
   min_impressions: 1000
   baseline_weeks: 7
+
+coverage_zero_alert:
+  enabled: true
+  coverage_threshold: 0.001  # Coverage below 0.1% considered "zero"
+  min_bacino: 100  # Minimum bacino to consider coverage-zero significant
+  consecutive_hours: 2  # Must be zero for 2+ consecutive hours to trigger
+  severity: P1  # Coverage-zero is always critical
+  baseline_weeks: 7  # Compare to 7-week same-hour baseline
 
 near_zero:
   revenue_threshold_eur: 100
