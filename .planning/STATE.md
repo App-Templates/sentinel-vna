@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 6 of 6 (Revisione Documentale)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In Progress
-Last activity: 2026-02-21 — Plan 06-02 (Operator Workflow Docs) completed
+Last activity: 2026-02-21 — Plan 06-03 (Slack Notifications Documentation) completed
 
-Progress: [██████████] 62%
+Progress: [███████████] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 0.12 hours
-- Total execution time: 1.84 hours
+- Total execution time: 1.88 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [██████████] 62%
 | 02 (Nuovi Tipi Alert) | 4 | 0.22h | 0.05h |
 | 03 (Operator Workflow) | 3 | 0.21h | 0.07h |
 | 04 (Notifiche Slack) | 3 | 0.03h | 0.01h |
-| 06 (Revisione Documentale) | 2 | 0.08h | 0.04h |
+| 06 (Revisione Documentale) | 3 | 0.12h | 0.04h |
 
 **Recent Trend:**
-- Last 5 plans: 03-03 (0.08h), 04-01 (0.07h), 04-02 (0.05h), 06-01 (0.05h), 06-02 (0.03h)
+- Last 5 plans: 04-01 (0.07h), 04-02 (0.05h), 06-01 (0.05h), 06-02 (0.03h), 06-03 (0.04h)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -43,6 +43,7 @@ Progress: [██████████] 62%
 | Phase 04 P03 | 0.03 | 3 tasks | 3 files |
 | Phase 06 P01 | 0.05 | 3 tasks | 1 files |
 | Phase 06 P02 | 0.03 | 3 tasks | 1 files |
+| Phase 06 P03 | 0.04 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase 06-02]: Three dedicated sections for operator workflow (feedback, assignment, intervention) improve discoverability vs single workflow section
 - [Phase 06-02]: Operator workflow sections placed after FAQ (foundational → advanced knowledge flow)
 - [Phase 06-02]: Inline feedback loop explanation in pipeline section shows Phase 3 integration without duplicate documentation
+- [Phase 06]: Slack notifications section placed after operator workflow sections for logical flow (workflow → notifications)
+- [Phase 06]: Daily digest scheduler documented in both operational and technical sections for different audiences
 
 ### Pending Todos
 
@@ -128,5 +131,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 06-02-PLAN.md (Operator Workflow Docs)
-Resume file: .planning/phases/06-revisione-documentale/06-02-SUMMARY.md
+Stopped at: Completed 06-03-PLAN.md (Slack Notifications Documentation)
+Resume file: .planning/phases/06-revisione-documentale/06-03-SUMMARY.md
