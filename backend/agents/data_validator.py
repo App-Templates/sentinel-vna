@@ -7,6 +7,10 @@ A0 (Data Gap): When data is missing beyond configured threshold,
 generates an A0 alert instead of stopping the pipeline.
 """
 
+from typing import Optional
+from pathlib import Path
+from datetime import timedelta
+
 from backend.utils.config_loader import get_config
 from backend.utils.logger import get_logger
 from backend.workflow.state import AlertState
@@ -21,6 +25,115 @@ def _safe_pct(current: float, baseline: float) -> float:
     if baseline == 0:
         return -100.0 if current == 0 else 100.0
     return round(((current - baseline) / abs(baseline)) * 100, 2)
+
+
+def _compute_yesterday_delta(state: AlertState) -> Optional[dict]:
+    """
+    Compare current hour revenue vs same hour yesterday.
+
+    Returns dict:
+    {
+        "same_hours_revenue_yesterday": float,
+        "current_hour_revenue": float,
+        "delta_pct": float,
+        "triggered": bool,
+        "severity": str (P0/P1/P2/NONE),
+    }
+
+    Or None if data insufficient.
+    """
+    import pandas as pd
+
+    config = get_config()
+    yc = config.comparative_alerting.yesterday_comparison
+
+    if not yc.enabled:
+        return None
+
+    # Get current hour timestamp and channel
+    ts_str = state.get("timestamp", "")
+    if not ts_str:
+        return None
+
+    try:
+        current_ts = pd.Timestamp(ts_str)
+        if current_ts.tzinfo is not None:
+            current_ts = current_ts.tz_localize(None)
+    except Exception:
+        logger.warning("Cannot parse timestamp '%s' for yesterday comparison", ts_str)
+        return None
+
+    channel = state.get("channel_group", "GOOGLE")
+
+    # Load hourly parquet (reuse existing cache if available)
+    _BASE_DIR = Path(__file__).parent.parent.parent
+    _HOURLY_PARQUET = _BASE_DIR / "data" / "baseline" / "hourly_aggregated.parquet"
+
+    if not _HOURLY_PARQUET.exists():
+        logger.warning("Hourly parquet not found for yesterday comparison")
+        return None
+
+    try:
+        df = pd.read_parquet(_HOURLY_PARQUET)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+    except Exception as e:
+        logger.error("Failed to load hourly parquet: %s", e)
+        return None
+
+    # Current hour revenue
+    mask_current = (df["timestamp"] == current_ts) & (df["channel_group"] == channel)
+    current_rows = df[mask_current]
+    if current_rows.empty:
+        return None
+    current_revenue = float(current_rows["revenue"].sum())
+
+    # Yesterday same hour revenue
+    yesterday_ts = current_ts - timedelta(days=1)
+    mask_yesterday = (df["timestamp"] == yesterday_ts) & (df["channel_group"] == channel)
+    yesterday_rows = df[mask_yesterday]
+    if yesterday_rows.empty:
+        return None
+    yesterday_revenue = float(yesterday_rows["revenue"].sum())
+
+    if yesterday_revenue <= 0:
+        return None
+
+    # Calculate delta percentage
+    delta_pct = ((current_revenue - yesterday_revenue) / yesterday_revenue) * 100.0
+
+    # Determine if triggered and severity
+    triggered = False
+    severity = "NONE"
+
+    if delta_pct <= yc.threshold_percent:
+        triggered = True
+        # Map to severity based on magnitude
+        if delta_pct <= -30:
+            severity = yc.severity_mapping.get("below_minus_30", "P0")
+        elif delta_pct <= -20:
+            severity = yc.severity_mapping.get("below_minus_20", "P1")
+        elif delta_pct <= -10:
+            severity = yc.severity_mapping.get("below_minus_10", "P2")
+        else:
+            severity = "P2"  # Default for anything beyond -10%
+
+        logger.info(
+            "Yesterday comparison ALERT: %.2f EUR today vs %.2f EUR yesterday (%.1f%%), severity=%s",
+            current_revenue, yesterday_revenue, delta_pct, severity,
+        )
+    else:
+        logger.info(
+            "Yesterday comparison OK: %.2f EUR today vs %.2f EUR yesterday (%.1f%%)",
+            current_revenue, yesterday_revenue, delta_pct,
+        )
+
+    return {
+        "same_hours_revenue_yesterday": round(yesterday_revenue, 2),
+        "current_hour_revenue": round(current_revenue, 2),
+        "delta_pct": round(delta_pct, 1),
+        "triggered": triggered,
+        "severity": severity,
+    }
 
 
 def data_validator_agent(state: AlertState) -> AlertState:
@@ -222,6 +335,11 @@ def data_validator_agent(state: AlertState) -> AlertState:
         delta["bacino_pct"],
         delta["coverage_pct"],
     )
+
+    # Compute yesterday comparison (v1.1)
+    yesterday_comp = _compute_yesterday_delta(state)
+    if yesterday_comp is not None:
+        state["yesterday_comparison"] = yesterday_comp
 
     return {
         **state,
