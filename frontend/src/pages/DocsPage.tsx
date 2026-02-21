@@ -896,7 +896,7 @@ function TechnicalDocs({ openSections, toggle }: { openSections: Set<string>; to
 
       {/* DATABASE */}
       <Section id="db" icon={Database} title="Database Schema (SQLite)" open={openSections.has('db')} onToggle={toggle}>
-        <p className="mb-4">SQLite con WAL (Write-Ahead Logging) per letture concorrenti. File: <code className="rounded bg-gray-100 px-1 text-xs">data/vna_alerts.db</code>.</p>
+        <p className="mb-4">SQLite con WAL (Write-Ahead Logging) per letture concorrenti. File: <code className="rounded bg-gray-100 px-1 text-xs">data/vna_alerts.db</code>. <strong>10 tabelle totali</strong> (4 core + 6 operator workflow/notifications).</p>
 
         <h4 className="mb-2 font-semibold text-gray-900">alerts</h4>
         <table className="mb-4 w-full border-collapse text-xs">
@@ -949,8 +949,118 @@ function TechnicalDocs({ openSections, toggle }: { openSections: Set<string>; to
           </tbody>
         </table>
 
+        <h4 className="mb-2 font-semibold text-gray-900">alert_feedback <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">feedback_id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">alert_id</Td><Td>TEXT FK</Td><Td>→ alerts.alert_id</Td></tr>
+            <tr><Td className="font-mono">user_id</Td><Td>TEXT NOT NULL</Td><Td>Operatore che ha dato feedback</Td></tr>
+            <tr><Td className="font-mono">feedback_type</Td><Td>TEXT NOT NULL</Td><Td>CHECK: REAL, FALSE_POSITIVE_MANUAL_INTERVENTION, FALSE_POSITIVE_SEASONALITY, FALSE_POSITIVE_TECHNICAL, FALSE_POSITIVE_PUBLISHER_CAMPAIGN, FALSE_POSITIVE_MARKET_NOISE</Td></tr>
+            <tr><Td className="font-mono">comment</Td><Td>TEXT</Td><Td>Commento opzionale</Td></tr>
+            <tr><Td className="font-mono">publisher_id</Td><Td>TEXT</Td><Td>Auto-estratto da contributors per tracking storico</Td></tr>
+            <tr><Td className="font-mono">timestamp</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Traccia feedback operatore su alert. Publisher_id estratto automaticamente dai contributors per analisi storica pattern falsi positivi per publisher.
+          <br/><strong>Indice:</strong> <code>idx_feedback_publisher</code>
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">alert_assignments <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">assignment_id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">alert_id</Td><Td>TEXT UNIQUE FK</Td><Td>→ alerts.alert_id (un assignment per alert)</Td></tr>
+            <tr><Td className="font-mono">assigned_to</Td><Td>TEXT NOT NULL</Td><Td>Email @adkaora.com (validato a livello Pydantic/API)</Td></tr>
+            <tr><Td className="font-mono">assigned_by</Td><Td>TEXT NOT NULL</Td><Td>Email operatore che ha assegnato</Td></tr>
+            <tr><Td className="font-mono">assigned_at</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Un assignment per alert. Reassignment gestito via INSERT OR REPLACE. Validazione email @adkaora.com a livello API.
+          <br/><strong>Indice:</strong> <code>idx_assignments_assigned_to</code>
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">manual_interventions <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">intervention_id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">timestamp</Td><Td>TEXT NOT NULL</Td><Td>Quando intervento applicato (per baseline exclusion)</Td></tr>
+            <tr><Td className="font-mono">publisher_id</Td><Td>TEXT NOT NULL</Td><Td>Publisher su cui intervento applicato</Td></tr>
+            <tr><Td className="font-mono">intervention_type</Td><Td>TEXT NOT NULL</Td><Td>CHECK: PRICING_RULE, FLOOR_CPM, DEMAND_PARTNER_CONFIG, AD_UNIT_SETUP, POLICY_CHANGE, OTHER</Td></tr>
+            <tr><Td className="font-mono">description</Td><Td>TEXT NOT NULL</Td><Td>Descrizione intervento</Td></tr>
+            <tr><Td className="font-mono">value_before</Td><Td>TEXT</Td><Td>Valore prima (opzionale)</Td></tr>
+            <tr><Td className="font-mono">value_after</Td><Td>TEXT</Td><Td>Valore dopo (opzionale)</Td></tr>
+            <tr><Td className="font-mono">user_id</Td><Td>TEXT NOT NULL</Td><Td>Operatore che ha applicato intervento</Td></tr>
+            <tr><Td className="font-mono">created_at</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Traccia interventi manuali operatore. Timestamp usato per query baseline exclusion (esclude ore con interventi dal calcolo baseline).
+          <br/><strong>Indici:</strong> <code>idx_interventions_publisher</code>, <code>idx_interventions_timestamp</code>
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">alert_intervention_links <Badge color="purple">Phase 3</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">link_id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">alert_id</Td><Td>TEXT FK</Td><Td>→ alerts.alert_id</Td></tr>
+            <tr><Td className="font-mono">intervention_id</Td><Td>INTEGER FK</Td><Td>→ manual_interventions.intervention_id</Td></tr>
+            <tr><Td className="font-mono">linked_at</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Junction table many-to-many tra alert e interventions. Traccia quali alert hanno generato azioni correttive.
+          <br/><strong>Indice:</strong> <code>idx_intervention_links_alert</code>
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">pending_notifications <Badge color="blue">Phase 4</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">alert_id</Td><Td>TEXT FK</Td><Td>→ alerts.alert_id ON DELETE CASCADE</Td></tr>
+            <tr><Td className="font-mono">severity</Td><Td>TEXT NOT NULL</Td><Td>P1, P2, P2-WATCH</Td></tr>
+            <tr><Td className="font-mono">channel_group</Td><Td>TEXT NOT NULL</Td><Td>GOOGLE, OPEN_BIDDING</Td></tr>
+            <tr><Td className="font-mono">timestamp</Td><Td>TEXT NOT NULL</Td><Td>Alert timestamp</Td></tr>
+            <tr><Td className="font-mono">created_at</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Coda per P1/P2/P2-WATCH alert in attesa di digest giornaliero. P0 skip questa tabella (invio immediato). Svuotata dal job daily_slack_digest.
+          <br/><strong>Indice:</strong> <code>idx_pending_notifications_created_at</code>
+        </p>
+
+        <h4 className="mb-2 font-semibold text-gray-900">pipeline_runs <Badge color="blue">Phase 4</Badge></h4>
+        <table className="mb-4 w-full border-collapse text-xs">
+          <thead><tr><Th>Colonna</Th><Th>Tipo</Th><Th>Note</Th></tr></thead>
+          <tbody>
+            <tr><Td className="font-mono">id</Td><Td>INTEGER PK</Td><Td>Autoincrement</Td></tr>
+            <tr><Td className="font-mono">run_id</Td><Td>TEXT NOT NULL</Td><Td>UUID run</Td></tr>
+            <tr><Td className="font-mono">timestamp</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+            <tr><Td className="font-mono">channel_group</Td><Td>TEXT NOT NULL</Td><Td>GOOGLE, OPEN_BIDDING</Td></tr>
+            <tr><Td className="font-mono">trigger_type</Td><Td>TEXT NOT NULL</Td><Td>A0, A1, A2, A3, A5, A6, A7</Td></tr>
+            <tr><Td className="font-mono">mode</Td><Td>TEXT NOT NULL</Td><Td>LIVE, BACKTEST</Td></tr>
+            <tr><Td className="font-mono">status</Td><Td>TEXT NOT NULL</Td><Td>SUCCESS, FAILED, SKIPPED</Td></tr>
+            <tr><Td className="font-mono">duration_sec</Td><Td>REAL</Td><Td>Durata esecuzione pipeline</Td></tr>
+            <tr><Td className="font-mono">llm_used</Td><Td>INTEGER</Td><Td>0 o 1 (boolean)</Td></tr>
+            <tr><Td className="font-mono">llm_fallback</Td><Td>INTEGER</Td><Td>0 o 1 (boolean)</Td></tr>
+            <tr><Td className="font-mono">alert_id</Td><Td>TEXT</Td><Td>Alert generato (null se no alert)</Td></tr>
+            <tr><Td className="font-mono">error_message</Td><Td>TEXT</Td><Td>Messaggio errore se FAILED</Td></tr>
+            <tr><Td className="font-mono">created_at</Td><Td>TEXT NOT NULL</Td><Td>ISO 8601</Td></tr>
+          </tbody>
+        </table>
+        <p className="mb-4 text-xs text-gray-600">
+          <strong>Scopo:</strong> Registra ogni esecuzione pipeline per performance tracking e debugging. Usato per metriche GET /api/metrics.
+          <br/><strong>Indice:</strong> <code>idx_pipeline_runs_created</code>
+        </p>
+
         <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
-          Indici: <code>idx_alerts_timestamp</code>, <code>idx_alerts_status</code>, <code>idx_alerts_severity</code>.
+          Indici core: <code>idx_alerts_timestamp</code>, <code>idx_alerts_status</code>, <code>idx_alerts_severity</code>.
           Foreign keys abilitate (<code>PRAGMA foreign_keys=ON</code>).
         </div>
       </Section>
