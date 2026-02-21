@@ -577,6 +577,95 @@ def _detect_coverage_zero(state: AlertState, config) -> Tuple[bool, Optional[dic
     return (True, coverage_zero_metrics)
 
 
+def _detect_pricing_rule_issue(state: AlertState, config) -> Tuple[bool, Optional[dict]]:
+    """
+    Detect pricing rule issue (A7) based on inverse correlation:
+    Coverage drops significantly while CPM spikes.
+
+    This pattern indicates floor prices are too high, rejecting valid bids
+    and reducing fill while artificially inflating CPM of remaining fills.
+
+    eCPM = (Revenue / Impressions) * 1000
+
+    Returns: (triggered, pricing_rule_metrics_dict)
+    """
+    current = state.get("current_metrics", {})
+    baseline = state.get("baseline_metrics", {})
+
+    current_rev = current.get("revenue", 0)
+    current_impr = current.get("impressions", 0)
+    current_bacino = current.get("bacino", 0)
+    baseline_rev = baseline.get("revenue", 0)
+    baseline_impr = baseline.get("impressions", 0)
+    baseline_bacino = baseline.get("bacino", 0)
+
+    # Skip if insufficient impressions for reliable CPM
+    if current_impr < config.pricing_rule_alert.min_impressions or baseline_impr < config.pricing_rule_alert.min_impressions:
+        logger.debug("A7 skipped: insufficient impressions (current=%d, baseline=%d, min=%d)",
+                     current_impr, baseline_impr, config.pricing_rule_alert.min_impressions)
+        return (False, None)
+
+    # Calculate coverage
+    current_coverage = current_impr / current_bacino if current_bacino > 0 else 0
+    baseline_coverage = baseline_impr / baseline_bacino if baseline_bacino > 0 else 0
+
+    if baseline_coverage == 0:
+        logger.debug("A7 skipped: baseline coverage is zero")
+        return (False, None)
+
+    coverage_delta_pct = ((current_coverage - baseline_coverage) / baseline_coverage) * 100
+
+    # Calculate eCPM
+    current_ecpm = (current_rev / current_impr) * 1000 if current_impr > 0 else 0
+    baseline_ecpm = (baseline_rev / baseline_impr) * 1000 if baseline_impr > 0 else 0
+
+    if baseline_ecpm == 0:
+        logger.debug("A7 skipped: baseline eCPM is zero")
+        return (False, None)
+
+    ecpm_delta_pct = ((current_ecpm - baseline_ecpm) / baseline_ecpm) * 100
+
+    # Check for inverse correlation pattern:
+    # Coverage drops (negative delta) AND eCPM spikes (positive delta)
+    coverage_dropping = coverage_delta_pct <= config.pricing_rule_alert.coverage_drop_threshold
+    ecpm_spiking = ecpm_delta_pct >= config.pricing_rule_alert.cpm_spike_threshold
+
+    if not (coverage_dropping and ecpm_spiking):
+        logger.debug("A7 not triggered: coverage_delta=%.1f%%, ecpm_delta=%.1f%% (need coverage down AND ecpm up)",
+                     coverage_delta_pct, ecpm_delta_pct)
+        return (False, None)
+
+    # Calculate inverse correlation score (simple heuristic)
+    # Normalize both deltas to [-1, 1] range and compute inverse correlation
+    # More negative coverage delta + more positive eCPM delta = stronger correlation
+    coverage_norm = max(min(coverage_delta_pct / 50, 0), -1)  # Normalize to [-1, 0]
+    ecpm_norm = max(min(ecpm_delta_pct / 50, 1), 0)  # Normalize to [0, 1]
+    correlation_score = coverage_norm - ecpm_norm  # Range [-2, 0], more negative = stronger inverse
+
+    # Trigger if correlation is strong enough (more negative than threshold)
+    if correlation_score >= config.pricing_rule_alert.correlation_strength:
+        logger.debug("A7 not triggered: correlation score %.2f >= threshold %.2f (too weak)",
+                     correlation_score, config.pricing_rule_alert.correlation_strength)
+        return (False, None)
+
+    pricing_rule_metrics = {
+        "current_coverage": round(current_coverage, 4),
+        "baseline_coverage": round(baseline_coverage, 4),
+        "coverage_delta_pct": round(coverage_delta_pct, 2),
+        "current_ecpm": round(current_ecpm, 2),
+        "baseline_ecpm": round(baseline_ecpm, 2),
+        "ecpm_delta_pct": round(ecpm_delta_pct, 2),
+        "correlation_score": round(correlation_score, 2),
+        "current_impressions": int(current_impr),
+        "baseline_impressions": int(baseline_impr),
+        "severity": config.pricing_rule_alert.severity,
+    }
+
+    logger.info("A7 triggered: coverage down %.1f%% + eCPM up %.1f%% (correlation=%.2f) -> pricing rule issue",
+                coverage_delta_pct, ecpm_delta_pct, correlation_score)
+    return (True, pricing_rule_metrics)
+
+
 def _load_prompt_template() -> str:
     """Load the prompt template from file."""
     try:
@@ -720,6 +809,29 @@ def _statistical_fallback(state: AlertState) -> AlertState:
                 **state,
                 "alert_triggered": False,
                 "alert_rule": "A6",
+                "severity": "NONE",
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+
+    # A7: Pricing rule issue (coverage down + CPM up)
+    if trigger == "A7" and config.pricing_rule_alert.enabled:
+        logger.info("A7 pricing-rule detection triggered")
+        triggered, pricing_rule_metrics = _detect_pricing_rule_issue(state, config)
+        if triggered and pricing_rule_metrics:
+            return {
+                **state,
+                "alert_triggered": True,
+                "alert_rule": "A7",
+                "severity": pricing_rule_metrics["severity"],
+                "pricing_rule_metrics": pricing_rule_metrics,
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+        else:
+            logger.info("A7 not triggered (no inverse correlation detected)")
+            return {
+                **state,
+                "alert_triggered": False,
+                "alert_rule": "A7",
                 "severity": "NONE",
                 "execution_errors": list(state.get("execution_errors", [])),
             }

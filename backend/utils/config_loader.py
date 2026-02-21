@@ -91,6 +91,16 @@ class CoverageZeroAlertConfig(BaseModel):
     baseline_weeks: int
 
 
+class PricingRuleAlertConfig(BaseModel):
+    enabled: bool
+    coverage_drop_threshold: float
+    cpm_spike_threshold: float
+    correlation_strength: float
+    severity: str
+    min_impressions: int
+    baseline_weeks: int
+
+
 class NearZeroConfig(BaseModel):
     revenue_threshold_eur: float
     coverage_threshold: float
@@ -151,6 +161,7 @@ class AlertingConfig(BaseModel):
     dual_thresholds: DualThresholdsConfig
     margin_alert: MarginAlertConfig
     coverage_zero_alert: CoverageZeroAlertConfig
+    pricing_rule_alert: PricingRuleAlertConfig
     near_zero: NearZeroConfig
     triage: TriageConfig
     top_contributors: TopContributorsConfig
