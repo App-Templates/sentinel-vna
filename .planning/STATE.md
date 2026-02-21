@@ -36,6 +36,7 @@ Progress: [████████░░] 46%
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 03 P04 | 0.12 | 5 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 03-03]: Junction table pattern for alert-intervention many-to-many links
 - [Phase 03-03]: Timestamp-based baseline filtering excludes entire hour if intervention occurred
 - [Phase 03-03]: Global intervention filtering across all publishers (conservative approach to prevent baseline contamination)
+- [Phase 03]: Radio group for feedback categories provides clear visual hierarchy
+- [Phase 03]: Two-button intervention save pattern supports quick logging and alert-specific tracking
+- [Phase 03]: Assignment in header, panels at bottom keeps operator workflow separate from alert analysis
 
 ### Pending Todos
 
