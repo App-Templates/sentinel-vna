@@ -222,7 +222,7 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
             { n: '6c', name: 'Environment Splitter', d: 'Scompone per WEB/AMP/APP. Rileva AMP drift.' },
             { n: 7, name: 'Insight Generator', d: 'Correla risultati, genera findings ordinati. Optional: Claude Sonnet.' },
             { n: 8, name: 'Report Builder', d: 'Compone report strutturato finale.' },
-            { n: 9, name: 'Notifier', d: 'Slack/email asincroni via ThreadPoolExecutor (solo LIVE, non backtest). Retry con exponential backoff.' },
+            { n: 9, name: 'Notifier', d: 'Invia notifiche Slack immediate (P0) o accoda per daily digest (P1/P2/P2-WATCH). Usa Block Kit templates severity-based. Retry con exponential backoff per P0. Asincrono via ThreadPoolExecutor (solo LIVE, non backtest).' },
           ].map((a) => (
             <div key={a.n} className="flex gap-3">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">{a.n}</div>
@@ -238,6 +238,11 @@ function OperationalDocs({ openSections, toggle }: { openSections: Set<string>; 
             <strong>Operator Feedback Loop (Phase 3):</strong> Dopo l'alert, operatori possono fornire feedback
             (REAL vs FALSE_POSITIVE variants), assegnare a colleghi, e registrare interventi manuali. Gli interventi
             vengono esclusi dalla baseline futura per prevenire alert ricorrenti su variazioni note.
+          </p>
+        </div>
+        <div className="mt-4 rounded-lg bg-yellow-50 p-3">
+          <p className="text-sm text-yellow-800">
+            <strong>Notifiche Backtest:</strong> Durante backtest (modalità BACKTEST), il notifier agent viene completamente bypassato. Le notifiche Slack sono inviate SOLO in modalità LIVE.
           </p>
         </div>
       </Section>
