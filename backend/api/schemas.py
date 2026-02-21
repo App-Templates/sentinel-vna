@@ -154,3 +154,26 @@ class HealthResponse(BaseModel):
     scheduler_running: bool
     timestamp: str
     pipeline_metrics: Optional[dict] = None
+
+
+# ---------------------------------------------------------------------------
+# Feedback schemas
+# ---------------------------------------------------------------------------
+
+class FeedbackRequest(BaseModel):
+    feedback_type: str  # Must match FeedbackCategory enum values
+    comment: Optional[str] = None
+
+
+class FeedbackResponse(BaseModel):
+    feedback_id: int
+    alert_id: str
+    user_id: str
+    feedback_type: str
+    comment: Optional[str] = None
+    timestamp: str
+
+
+class FeedbackHistoryResponse(BaseModel):
+    feedbacks: list[FeedbackResponse]
+    total: int

@@ -24,6 +24,9 @@ from backend.api.schemas import (
     BacktestResultResponse,
     BacktestStartResponse,
     CommentRequest,
+    FeedbackRequest,
+    FeedbackResponse,
+    FeedbackHistoryResponse,
     HealthResponse,
     RecheckRequest,
     RecheckResponse,
@@ -31,15 +34,18 @@ from backend.api.schemas import (
     SuccessResponse,
 )
 from backend.backtest.runner import BacktestRunner
-from backend.db.models import AlertStatus, EventType
+from backend.db.models import AlertFeedbackModel, AlertStatus, EventType, FeedbackCategory
 from backend.db.operations import (
     create_event,
+    create_feedback,
     create_recheck,
     get_alert_by_id,
     get_alerts,
     get_all_backtest_results,
     get_backtest_result,
+    get_feedbacks_for_alert,
     get_pipeline_metrics,
+    get_publisher_feedback_history,
     save_backtest_result,
     update_alert_status,
 )
@@ -255,6 +261,71 @@ async def add_comment(alert_id: str, body: CommentRequest, request: Request):
     create_event(alert_id, EventType.COMMENT, user_id, body.comment)
     logger.info("Comment added to alert %s by %s", alert_id, user_id)
     return SuccessResponse(message="Comment added")
+
+
+# ---------------------------------------------------------------------------
+# Feedback
+# ---------------------------------------------------------------------------
+
+@router.post("/alerts/{alert_id}/feedback")
+@limiter.limit("30/minute")
+async def create_alert_feedback(alert_id: str, body: FeedbackRequest, request: Request):
+    """Submit feedback for an alert (REAL or FALSE_POSITIVE with category)."""
+    user = await require_auth(request)
+    user_id = user["email"]
+
+    # Validate alert exists
+    data = get_alert_by_id(alert_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Validate feedback_type against FeedbackCategory enum
+    try:
+        feedback_category = FeedbackCategory(body.feedback_type)
+    except ValueError:
+        valid_types = [e.value for e in FeedbackCategory]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid feedback_type. Must be one of: {', '.join(valid_types)}"
+        )
+
+    # Create feedback
+    feedback = AlertFeedbackModel(
+        alert_id=alert_id,
+        user_id=user_id,
+        feedback_type=feedback_category,
+        comment=body.comment,
+    )
+    feedback_id = create_feedback(feedback)
+
+    logger.info("Feedback created for alert %s by %s: %s", alert_id, user_id, feedback_category.value)
+    return {"success": True, "feedback_id": feedback_id}
+
+
+@router.get("/alerts/{alert_id}/feedbacks")
+@limiter.limit("60/minute")
+async def get_alert_feedbacks(alert_id: str, request: Request):
+    """Get all feedback entries for a specific alert."""
+    feedbacks = get_feedbacks_for_alert(alert_id)
+    return {
+        "feedbacks": [FeedbackResponse(**f) for f in feedbacks],
+        "total": len(feedbacks)
+    }
+
+
+@router.get("/publishers/{publisher_id}/feedback-history", response_model=FeedbackHistoryResponse)
+@limiter.limit("60/minute")
+async def get_publisher_history(
+    publisher_id: str,
+    request: Request,
+    limit: int = Query(50, ge=1, le=200)
+):
+    """Get feedback history for a publisher with alert context."""
+    feedbacks = get_publisher_feedback_history(publisher_id, limit)
+    return FeedbackHistoryResponse(
+        feedbacks=[FeedbackResponse(**f) for f in feedbacks],
+        total=len(feedbacks)
+    )
 
 
 # ---------------------------------------------------------------------------
