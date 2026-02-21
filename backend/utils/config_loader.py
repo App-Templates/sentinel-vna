@@ -70,6 +70,27 @@ class ComparativeAlertingConfig(BaseModel):
     moving_average_14d: MovingAverage14dConfig
 
 
+class MarginThresholdConfig(BaseModel):
+    drop_percent: float
+    duration_hours: int
+
+
+class MarginAlertConfig(BaseModel):
+    enabled: bool
+    ecpm_drop_thresholds: dict[str, MarginThresholdConfig]  # P1, P2
+    min_impressions: int
+    baseline_weeks: int
+
+
+class CoverageZeroAlertConfig(BaseModel):
+    enabled: bool
+    coverage_threshold: float
+    min_bacino: int
+    consecutive_hours: int
+    severity: str
+    baseline_weeks: int
+
+
 class NearZeroConfig(BaseModel):
     revenue_threshold_eur: float
     coverage_threshold: float
@@ -128,6 +149,8 @@ class AlertingConfig(BaseModel):
     drift_regression: DriftRegressionConfig
     comparative_alerting: ComparativeAlertingConfig
     dual_thresholds: DualThresholdsConfig
+    margin_alert: MarginAlertConfig
+    coverage_zero_alert: CoverageZeroAlertConfig
     near_zero: NearZeroConfig
     triage: TriageConfig
     top_contributors: TopContributorsConfig

@@ -465,6 +465,70 @@ def _compute_14d_moving_average(state: AlertState) -> Optional[dict]:
     }
 
 
+def _detect_margin_anomaly(
+    state: AlertState, config
+) -> Tuple[bool, Optional[str], Optional[dict]]:
+    """
+    Detect margin anomaly (A5) based on eCPM drop vs baseline.
+
+    eCPM = (Revenue / Impressions) * 1000
+
+    Returns: (triggered, severity, margin_metrics_dict)
+    """
+    current = state.get("current_metrics", {})
+    baseline = state.get("baseline_metrics", {})
+
+    current_rev = current.get("revenue", 0)
+    current_impr = current.get("impressions", 0)
+    baseline_rev = baseline.get("revenue", 0)
+    baseline_impr = baseline.get("impressions", 0)
+
+    min_impr = config.margin_alert.min_impressions
+
+    # Skip if insufficient impressions for reliable eCPM
+    if current_impr < min_impr or baseline_impr < min_impr:
+        logger.debug(
+            "A5 skipped: insufficient impressions (current=%d, baseline=%d, min=%d)",
+            current_impr, baseline_impr, min_impr,
+        )
+        return (False, None, None)
+
+    current_ecpm = (current_rev / current_impr) * 1000 if current_impr > 0 else 0
+    baseline_ecpm = (baseline_rev / baseline_impr) * 1000 if baseline_impr > 0 else 0
+
+    if baseline_ecpm == 0:
+        logger.debug("A5 skipped: baseline eCPM is zero")
+        return (False, None, None)
+
+    ecpm_delta_pct = ((current_ecpm - baseline_ecpm) / baseline_ecpm) * 100
+
+    # Check severity thresholds (P1 is stricter, check first)
+    severity = None
+    thresholds = config.margin_alert.ecpm_drop_thresholds
+    if "P1" in thresholds and ecpm_delta_pct <= thresholds["P1"].drop_percent:
+        severity = "P1"
+    elif "P2" in thresholds and ecpm_delta_pct <= thresholds["P2"].drop_percent:
+        severity = "P2"
+
+    if severity:
+        margin_metrics = {
+            "current_ecpm": round(current_ecpm, 2),
+            "baseline_ecpm": round(baseline_ecpm, 2),
+            "ecpm_delta_pct": round(ecpm_delta_pct, 2),
+            "current_impressions": int(current_impr),
+            "baseline_impressions": int(baseline_impr),
+            "severity": severity,
+        }
+        logger.info(
+            "A5 triggered: eCPM drop %.1f%% (current=%.2f, baseline=%.2f) -> %s",
+            ecpm_delta_pct, current_ecpm, baseline_ecpm, severity,
+        )
+        return (True, severity, margin_metrics)
+
+    logger.debug("A5 not triggered: eCPM delta %.1f%% within thresholds", ecpm_delta_pct)
+    return (False, None, None)
+
+
 def _load_prompt_template() -> str:
     """Load the prompt template from file."""
     try:
@@ -565,6 +629,29 @@ def _statistical_fallback(state: AlertState) -> AlertState:
 
     # Adjust thresholds for off-peak
     threshold_multiplier = 1.5 if is_off_peak else (1.2 if is_weekend else 1.0)
+
+    # A5: Margin/eCPM drop
+    if trigger == "A5" and config.margin_alert.enabled:
+        logger.info("A5 margin detection triggered")
+        triggered, severity, margin_metrics = _detect_margin_anomaly(state, config)
+        if triggered and margin_metrics:
+            return {
+                **state,
+                "alert_triggered": True,
+                "alert_rule": "A5",
+                "severity": severity,
+                "margin_metrics": margin_metrics,
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+        else:
+            logger.info("A5 not triggered (eCPM within thresholds)")
+            return {
+                **state,
+                "alert_triggered": False,
+                "alert_rule": "A5",
+                "severity": "NONE",
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
 
     # A3: Near-zero check with consecutive periods validation
     if trigger == "A3":
