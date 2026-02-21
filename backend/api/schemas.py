@@ -81,6 +81,7 @@ class AlertDetail(BaseModel):
     created_at: str
     updated_at: str
     events: list[AlertEvent] = []
+    assignment: Optional[dict] = None
 
 
 class AlertListResponse(BaseModel):
@@ -177,3 +178,19 @@ class FeedbackResponse(BaseModel):
 class FeedbackHistoryResponse(BaseModel):
     feedbacks: list[FeedbackResponse]
     total: int
+
+
+# ---------------------------------------------------------------------------
+# Assignment schemas
+# ---------------------------------------------------------------------------
+
+class AssignRequest(BaseModel):
+    assigned_to: str = Field(..., pattern=r"^[a-zA-Z0-9._%+-]+@adkaora\.com$")
+
+
+class AssignmentResponse(BaseModel):
+    assignment_id: int
+    alert_id: str
+    assigned_to: str
+    assigned_by: str
+    assigned_at: str

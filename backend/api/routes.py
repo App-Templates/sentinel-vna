@@ -20,6 +20,8 @@ from backend.api.schemas import (
     AlertDetail,
     AlertEvent,
     AlertTrendResponse,
+    AssignRequest,
+    AssignmentResponse,
     BacktestRequest,
     BacktestResultResponse,
     BacktestStartResponse,
@@ -34,11 +36,13 @@ from backend.api.schemas import (
     SuccessResponse,
 )
 from backend.backtest.runner import BacktestRunner
-from backend.db.models import AlertFeedbackModel, AlertStatus, EventType, FeedbackCategory
+from backend.db.models import AlertAssignmentModel, AlertFeedbackModel, AlertStatus, EventType, FeedbackCategory
 from backend.db.operations import (
+    assign_alert,
     create_event,
     create_feedback,
     create_recheck,
+    get_alert_assignment,
     get_alert_by_id,
     get_alerts,
     get_all_backtest_results,
@@ -47,6 +51,7 @@ from backend.db.operations import (
     get_pipeline_metrics,
     get_publisher_feedback_history,
     save_backtest_result,
+    unassign_alert,
     update_alert_status,
 )
 from backend.scheduler.scheduler import is_scheduler_running
@@ -98,6 +103,7 @@ def list_alerts(
     channel: Optional[str] = Query(None),
     date_from: Optional[str] = Query(None),
     date_to: Optional[str] = Query(None),
+    assigned_to: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
@@ -107,6 +113,7 @@ def list_alerts(
         channel=channel,
         date_from=date_from,
         date_to=date_to,
+        assigned_to=assigned_to,
         limit=limit,
         offset=offset,
     )
@@ -261,6 +268,59 @@ async def add_comment(alert_id: str, body: CommentRequest, request: Request):
     create_event(alert_id, EventType.COMMENT, user_id, body.comment)
     logger.info("Comment added to alert %s by %s", alert_id, user_id)
     return SuccessResponse(message="Comment added")
+
+
+# ---------------------------------------------------------------------------
+# Alert Assignments
+# ---------------------------------------------------------------------------
+
+@router.post("/alerts/{alert_id}/assign")
+@limiter.limit("30/minute")
+async def assign_alert_to_user(alert_id: str, body: AssignRequest, request: Request):
+    """Assign an alert to a team member."""
+    user = await require_auth(request)
+    assigned_by = user["email"]
+
+    # Validate assigned_to email matches @adkaora.com pattern
+    if not body.assigned_to.endswith("@adkaora.com"):
+        raise HTTPException(status_code=400, detail="assigned_to must be an @adkaora.com email")
+
+    # Check alert exists
+    data = get_alert_by_id(alert_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Create assignment
+    assignment = AlertAssignmentModel(
+        alert_id=alert_id,
+        assigned_to=body.assigned_to,
+        assigned_by=assigned_by,
+    )
+    assignment_id = assign_alert(assignment)
+
+    logger.info("Alert %s assigned to %s by %s", alert_id, body.assigned_to, assigned_by)
+    return {"success": True, "assignment_id": assignment_id}
+
+
+@router.delete("/alerts/{alert_id}/assign")
+@limiter.limit("30/minute")
+async def unassign_alert_from_user(alert_id: str, request: Request):
+    """Remove assignment from an alert."""
+    user = await require_auth(request)
+
+    # Check alert exists
+    data = get_alert_by_id(alert_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Remove assignment
+    success = unassign_alert(alert_id)
+
+    if success:
+        logger.info("Alert %s unassigned by %s", alert_id, user["email"])
+        return {"success": True, "message": "Assignment removed"}
+    else:
+        return {"success": False, "message": "No assignment found for this alert"}
 
 
 # ---------------------------------------------------------------------------
