@@ -21,7 +21,7 @@
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Alerting Evoluto** - Extend anomaly_detector agent with drift regression, add yesterday/14d comparisons, calibrate dual thresholds, enable weekend scheduling (completed 2026-02-21)
-- [ ] **Phase 2: Nuovi Tipi Alert** - Add A5 (margin), A6 (coverage-zero), A7 (pricing-rule) alert rules to existing pipeline
+- [x] **Phase 2: Nuovi Tipi Alert** - Add A5 (margin), A6 (coverage-zero), A7 (pricing-rule) alert rules to existing pipeline (completed 2026-02-21)
 - [ ] **Phase 3: Operator Workflow** - Add feedback/assignment UI to existing alert detail page, add intervention tracking with new DB tables
 - [ ] **Phase 4: Notifiche Slack** - Activate existing notifier agent with real Slack webhook, add severity-based templates and daily digest
 - [ ] **Phase 5: Dati Live e Multi-canale** - Activate existing Athena connector, extend data model for new channels, add CTR/Viewability metrics
@@ -118,7 +118,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Alerting Evoluto | 0/? | Complete    | 2026-02-21 |
-| 2. Nuovi Tipi Alert | 3/4 | In Progress|  |
+| 2. Nuovi Tipi Alert | 4/4 | Complete   | 2026-02-21 |
 | 3. Operator Workflow | 0/? | Not started | - |
 | 4. Notifiche Slack | 0/? | Not started | - |
 | 5. Dati Live e Multi-canale | 0/? | Not started | - |
@@ -128,7 +128,7 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 
 **Goal:** Tutta la documentazione in-app (tecnica e operativa) riflette accuratamente le nuove regole, soglie, alert types e workflow introdotti nelle fasi 1-5
 **Depends on:** Phase 5
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 6 to break down)

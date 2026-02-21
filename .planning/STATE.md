@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 2 - Nuovi Tipi Alert (executing)
+**Current focus:** Phase 2 - Nuovi Tipi Alert (completed)
 
 ## Current Position
 
 Phase: 2 of 6 (Nuovi Tipi Alert)
-Plan: 3 of 4 in current phase
-Status: Executing
-Last activity: 2026-02-21 — Plan 02-03 (A7 Pricing-Rule Alert) completed
+Plan: 4 of 4 in current phase (COMPLETE)
+Status: Phase Complete
+Last activity: 2026-02-21 — Plan 02-04 (Frontend A5/A6/A7 Visualization) completed
 
-Progress: [█████░░░░░] 29%
+Progress: [██████░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 0.22 hours
-- Total execution time: 1.40 hours
+- Total plans completed: 8
+- Average duration: 0.18 hours
+- Total execution time: 1.47 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 (Alerting Evoluto) | 4 | 1.25h | 0.31h |
-| 02 (Nuovi Tipi Alert) | 3 | 0.15h | 0.05h |
+| 02 (Nuovi Tipi Alert) | 4 | 0.22h | 0.05h |
 
 **Recent Trend:**
-- Last 5 plans: 01-04 (0.25h), 02-01 (0.03h), 02-02 (0.07h), 02-03 (0.05h)
+- Last 5 plans: 02-01 (0.03h), 02-02 (0.07h), 02-03 (0.05h), 02-04 (0.07h)
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 - [02-03]: min_impressions=500 (lower than A5's 1000) to catch pricing issues in moderate traffic
 - [02-03]: A7 always P1 severity since pricing errors cause immediate revenue loss
 - [02-03]: Correlation threshold -0.7 balances sensitivity with false positive avoidance
+- [02-04]: eCPM display in RevenueStatusSection (not new section) since margin is revenue-related
+- [02-04]: Coverage-zero and pricing-rule panels in TriageSection since they extend triage diagnosis
+- [02-04]: Helper functions for cause labels/descriptions kept local to TriageSection
 
 ### Pending Todos
 
@@ -90,5 +93,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 02-03-PLAN.md (A7 Pricing-Rule Alert)
-Resume file: .planning/phases/02-nuovi-tipi-alert/02-03-SUMMARY.md
+Stopped at: Completed 02-04-PLAN.md (Frontend A5/A6/A7 Visualization) — Phase 2 COMPLETE
+Resume file: .planning/phases/02-nuovi-tipi-alert/02-04-SUMMARY.md
