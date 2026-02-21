@@ -529,6 +529,54 @@ def _detect_margin_anomaly(
     return (False, None, None)
 
 
+def _detect_coverage_zero(state: AlertState, config) -> Tuple[bool, Optional[dict]]:
+    """
+    Detect coverage-zero scenario (A6).
+
+    Coverage = impressions / bacino
+    Triggers when coverage < threshold for consecutive hours with sufficient bacino.
+
+    Returns: (triggered, coverage_zero_metrics_dict)
+    """
+    current = state.get("current_metrics", {})
+    baseline = state.get("baseline_metrics", {})
+
+    current_impr = current.get("impressions", 0)
+    current_bacino = current.get("bacino", 0)
+    baseline_impr = baseline.get("impressions", 0)
+    baseline_bacino = baseline.get("bacino", 0)
+
+    # Skip if insufficient bacino (coverage-zero in low-traffic periods is expected)
+    if current_bacino < config.coverage_zero_alert.min_bacino:
+        logger.debug("A6 skipped: bacino too low (current=%d, min=%d)",
+                     current_bacino, config.coverage_zero_alert.min_bacino)
+        return (False, None)
+
+    current_coverage = current_impr / current_bacino if current_bacino > 0 else 0
+    baseline_coverage = baseline_impr / baseline_bacino if baseline_bacino > 0 else 0
+
+    # Check if coverage is below threshold
+    if current_coverage >= config.coverage_zero_alert.coverage_threshold:
+        logger.debug("A6 not triggered: coverage %.4f >= threshold %.4f",
+                     current_coverage, config.coverage_zero_alert.coverage_threshold)
+        return (False, None)
+
+    coverage_zero_metrics = {
+        "current_coverage": round(current_coverage, 4),
+        "baseline_coverage": round(baseline_coverage, 4),
+        "current_impressions": int(current_impr),
+        "current_bacino": int(current_bacino),
+        "baseline_impressions": int(baseline_impr),
+        "baseline_bacino": int(baseline_bacino),
+        "severity": config.coverage_zero_alert.severity,
+    }
+
+    logger.info("A6 triggered: coverage %.4f < threshold %.4f (bacino=%d, impressions=%d)",
+                current_coverage, config.coverage_zero_alert.coverage_threshold,
+                current_bacino, current_impr)
+    return (True, coverage_zero_metrics)
+
+
 def _load_prompt_template() -> str:
     """Load the prompt template from file."""
     try:
@@ -649,6 +697,29 @@ def _statistical_fallback(state: AlertState) -> AlertState:
                 **state,
                 "alert_triggered": False,
                 "alert_rule": "A5",
+                "severity": "NONE",
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+
+    # A6: Coverage zero
+    if trigger == "A6" and config.coverage_zero_alert.enabled:
+        logger.info("A6 coverage-zero detection triggered")
+        triggered, coverage_zero_metrics = _detect_coverage_zero(state, config)
+        if triggered and coverage_zero_metrics:
+            return {
+                **state,
+                "alert_triggered": True,
+                "alert_rule": "A6",
+                "severity": coverage_zero_metrics["severity"],
+                "coverage_zero_metrics": coverage_zero_metrics,
+                "execution_errors": list(state.get("execution_errors", [])),
+            }
+        else:
+            logger.info("A6 not triggered (coverage above threshold)")
+            return {
+                **state,
+                "alert_triggered": False,
+                "alert_rule": "A6",
                 "severity": "NONE",
                 "execution_errors": list(state.get("execution_errors", [])),
             }
