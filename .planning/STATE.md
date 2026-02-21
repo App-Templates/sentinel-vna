@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Trovare gli alert in tempo quasi reale comunicando solo cio che e davvero importante — rendendo visibili i cali graduali che oggi nessuno nota.
-**Current focus:** Phase 1 - Alerting Evoluto
+**Current focus:** Phase 2 - Nuovi Tipi Alert (next to plan)
 
 ## Current Position
 
-Phase: 1 of 5 (Alerting Evoluto)
-Plan: 4 of ? in current phase
-Status: In progress
-Last activity: 2026-02-21 — Plan 01-04 completed (Drift Visualization Frontend)
+Phase: 2 of 6 (Nuovi Tipi Alert)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-02-21 — Phase 1 complete, Phase 6 added (Revisione Documentale)
 
-Progress: [█████░░░░░] 50%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -64,6 +64,10 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - [01-04]: Human verification of drift visualization in browser (pending)
+
+### Roadmap Evolution
+
+- Phase 6 added: Revisione Documentale — rivedere tutta la documentazione in-app (tecnica e operativa) dopo le modifiche delle fasi 1-5
 
 ### Blockers/Concerns
 

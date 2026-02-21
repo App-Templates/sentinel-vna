@@ -109,8 +109,8 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
-Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other. After Phase 1, they can be executed in any order.
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other. After Phase 1, they can be executed in any order. Phase 6 depends on all previous phases (reviews documentation after all changes).
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -119,3 +119,13 @@ Note: Phases 2, 3, 4, 5 all depend on Phase 1 but are independent of each other.
 | 3. Operator Workflow | 0/? | Not started | - |
 | 4. Notifiche Slack | 0/? | Not started | - |
 | 5. Dati Live e Multi-canale | 0/? | Not started | - |
+| 6. Revisione Documentale | 0/? | Not started | - |
+
+### Phase 6: Revisione Documentale
+
+**Goal:** Tutta la documentazione in-app (tecnica e operativa) riflette accuratamente le nuove regole, soglie, alert types e workflow introdotti nelle fasi 1-5
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 6 to break down)
