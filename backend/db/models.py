@@ -311,6 +311,18 @@ CREATE TABLE IF NOT EXISTS alert_intervention_links (
 );
 """
 
+SQL_CREATE_PENDING_NOTIFICATIONS = """
+CREATE TABLE IF NOT EXISTS pending_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_id TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    channel_group TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (alert_id) REFERENCES alerts(alert_id) ON DELETE CASCADE
+);
+"""
+
 SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alerts(timestamp);",
     "CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);",
@@ -321,4 +333,5 @@ SQL_CREATE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_interventions_timestamp ON manual_interventions(timestamp);",
     "CREATE INDEX IF NOT EXISTS idx_interventions_publisher ON manual_interventions(publisher_id);",
     "CREATE INDEX IF NOT EXISTS idx_intervention_links_alert ON alert_intervention_links(alert_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pending_notifications_created_at ON pending_notifications(created_at);",
 ]
