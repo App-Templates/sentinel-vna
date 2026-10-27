@@ -1,0 +1,8 @@
+# Revenue share configuration
+# share_rate = percentage going to publisher (net revenue = gross * share_rate)
+default_share: 0.60
+
+# Per-publisher overrides (uncomment and fill when real data arrives)
+# publishers:
+#   Mondadori: 0.65
+#   Mediamond: 0.58

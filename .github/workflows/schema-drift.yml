@@ -1,0 +1,30 @@
+name: schema-drift
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  schema-drift-check:
+    name: backend/db/models.py CHECK vs migrations 001..006
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run schema-drift gate (HARD-02)
+        run: |
+          python scripts/test_models_sync.py -v

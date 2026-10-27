@@ -1,0 +1,39 @@
+# Value Network Alerting - Python Dependencies
+
+# Core Framework
+langgraph>=0.0.20
+langchain>=0.1.0
+
+# Data Processing
+pandas>=1.5.0
+pyarrow>=10.0.0
+numpy>=1.24.0
+
+# API Framework
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Configuration
+pyyaml>=6.0.0
+
+# Logging
+python-json-logger>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# HTTP Client
+httpx>=0.24.0
+
+# CORS
+python-multipart>=0.0.6
+
+# Optional: For development
+black>=23.0.0
+ruff>=0.0.280
+mypy>=1.5.0

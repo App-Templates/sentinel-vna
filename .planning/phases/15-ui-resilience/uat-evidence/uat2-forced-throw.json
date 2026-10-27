@@ -1,0 +1,57 @@
+{
+  "scenario": "uat2-forced",
+  "url": "http://localhost:5173/alerts/ALT-20260323-130000-P2",
+  "evidence": {
+    "bodyHasMinHScreen": false,
+    "chartUnavailable": [
+      {
+        "tag": "p",
+        "classes": "text-sm text-gray-500",
+        "text": "Chart unavailable. Reload the page if this persists."
+      }
+    ],
+    "no7w": [],
+    "noEnv": [],
+    "noGeo": [],
+    "triageHeading": [
+      "Revenue Trend (7 Weeks)"
+    ],
+    "fallbackContainerCount": 3,
+    "chartRoots": 0,
+    "documentTitle": "Value Network Alerting",
+    "bodyTextSnippet": " SentinelDashboardAlertsTop PublishersBacktestHealthDocs & FAQAdminUUatLogoutAlertsAlerts/ALT-20260323-130000-P2Dashboard/Alert ALT-2026Alert ALT-2026P2OPEN23 mar, 14:00TAMCoverageRule: A2Assign to:Select team member...vito.sena@adkaora.comops1@adkaora.comops2@adkaora.comdev-user@adkaora.com1. Revenue Impact2. Triage Classification3. Top Contributors4. Geo Breakdown5. Environment Split6. Insights & ActionsStep 1: Revenue StatusTAM onlyGrossNet (post rev-share 60%)Drift Detected (A2)Current Reven"
+  },
+  "console": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "type": "error",
+      "text": "%o\n\n%s\n\n%s\n TypeError: (data ?? []).map is not a function\n    at RevenueTrendChart (http://localhost:5173/src/components/charts/RevenueTrendChart.tsx:28:34)\n    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:18509:20)\n    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:5654:24)\n    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:7475:21)\n    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:8525:20)\n    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:997:72)\n    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12561:98)\n    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12424:43)\n    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12408:13)\n    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:11827:37) The above error occurred in the <RevenueTrendChart> component. React will try to recreate this component tree from scratch using the error boundary you provided, ChartErrorBoundary."
+    },
+    {
+      "type": "error",
+      "text": "[ChartErrorBoundary] TypeError: (data ?? []).map is not a function\n    at RevenueTrendChart (http://localhost:5173/src/components/charts/RevenueTrendChart.tsx:28:34)\n    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:18509:20)\n    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:5654:24)\n    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:7475:21)\n    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:8525:20)\n    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:997:72)\n    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12561:98)\n    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12424:43)\n    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:12408:13)\n    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0b41bd21:11827:37) {componentStack: \n    at RevenueTrendChart (http://localhost:5173/s…alhost:5173/src/components/ErrorBoundary.tsx:5:5)}"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    }
+  ],
+  "pageErrors": [],
+  "screenshot": "/tmp/sentinel-uat/shot-uat2-forced.png",
+  "timestamp": "2026-05-04T15:48:33.965Z"
+}

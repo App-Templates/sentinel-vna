@@ -1,0 +1,24 @@
+{
+  "outputDirectory": "frontend/dist",
+  "routes": [
+    { "src": "/api/alerts/([^/]+)/trend$", "dest": "/api/alerts/$1_trend.json" },
+    { "src": "/api/alerts/([^/]+)/feedbacks$", "dest": "/api/alerts/$1_feedbacks.json" },
+    { "src": "/api/alerts/([^/]+)$", "dest": "/api/alerts/$1.json" },
+    { "src": "/api/publishers/top$", "dest": "/api/publishers_top.json" },
+    { "src": "/api/publishers/([^/]+)/weekly-kpis$", "dest": "/api/publishers/$1_weekly-kpis.json" },
+    { "src": "/api/publishers/([^/]+)/ecpm-analysis$", "dest": "/api/publishers/$1_ecpm-analysis.json" },
+    { "src": "/api/publishers/([^/]+)/recurring-patterns$", "dest": "/api/publishers/$1_recurring-patterns.json" },
+    { "src": "/api/publishers/([^/]+)/feedback-history$", "dest": "/api/publishers/$1_feedback-history.json" },
+    { "src": "/api/publishers/([^/]+)/interventions$", "dest": "/api/publishers/$1_interventions.json" },
+    { "src": "/api/metrics/revenue-status-24h/(.+)$", "dest": "/api/metrics/revenue-status-24h_$1.json" },
+    { "src": "/api/metrics/revenue-status-24h$", "dest": "/api/metrics_revenue-status-24h.json" },
+    { "src": "/api/metrics/network-totals$", "dest": "/api/metrics_network-totals.json" },
+    { "src": "/api/admin/alerting-rules$", "dest": "/api/admin_alerting-rules.json" },
+    { "src": "/api/admin/datasources$", "dest": "/api/admin_datasources.json" },
+    { "src": "/api/admin/slack-config$", "dest": "/api/admin_slack-config.json" },
+    { "src": "/api/(.+\\.json)$", "dest": "/api/$1" },
+    { "src": "/api/([^/.]+)$", "dest": "/api/$1.json" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

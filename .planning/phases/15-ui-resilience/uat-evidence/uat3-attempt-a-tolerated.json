@@ -1,0 +1,51 @@
+{
+  "scenario": "uat3-record",
+  "url": "http://localhost:5173/alerts/ALT-20260323-130000-P2",
+  "evidence": {
+    "bodyHasMinHScreen": false,
+    "chartUnavailable": [],
+    "no7w": [],
+    "noEnv": [],
+    "noGeo": [],
+    "triageHeading": [
+      "Revenue Trend (7 Weeks)"
+    ],
+    "fallbackContainerCount": 2,
+    "chartRoots": 1,
+    "documentTitle": "Value Network Alerting",
+    "bodyTextSnippet": " SentinelDashboardAlertsTop PublishersBacktestHealthDocs & FAQAdminUUatLogoutAlertsAlerts/ALT-20260323-130000-P2Dashboard/Alert ALT-2026Alert ALT-2026P2OPEN23 mar, 14:00TAMCoverageRule: A2Assign to:Select team member...vito.sena@adkaora.comops1@adkaora.comops2@adkaora.comdev-user@adkaora.com1. Revenue Impact2. Triage Classification3. Top Contributors4. Geo Breakdown5. Environment Split6. Insights & ActionsStep 1: Revenue StatusTAM onlyGrossNet (post rev-share 60%)Drift Detected (A2)Current Reven"
+  },
+  "console": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the\n       height and width."
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the\n       height and width."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    }
+  ],
+  "pageErrors": [],
+  "screenshot": "/tmp/sentinel-uat/shot-uat3-record.png",
+  "timestamp": "2026-05-04T15:49:03.229Z"
+}

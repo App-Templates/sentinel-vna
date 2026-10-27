@@ -1,0 +1,31 @@
+Phase 09 pre-migration-002 snapshot — provenance record
+========================================================
+
+Created: 2026-04-23
+Tag:     v1.3-pre-phase-09 (annotated, local only; no push per R-05)
+
+Live DB (pre-apply) — data/vna_alerts.db
+  SHA256: c6372d88cdb1622f2eff4d58fac7cef692ebbdc798e38842b4090792f78184c6
+  Alerts count: 200
+  pending_notifications count: 0
+  Ledger: 001_expand_channel_groups applied 2026-04-22 23:42:45
+
+Backup — data/vna_alerts.db.pre-phase09.bak
+  SHA256: ce412816eb8271b715b9842557a8ba597a33de288c2150e7588d4d37f2d605e5
+  Alerts count: 200
+  Method: sqlite3.Connection.backup() (WAL-safe, checkpoints WAL pages into .bak)
+  Size:   2183168 bytes (same as live pre-apply — semantically identical)
+
+Semantic equivalence verified:
+  - Same alert count (200 vs 200)
+  - Same ledger state (only 001)
+  - .bak has NO `deprecated` column (proves it's pre-apply)
+  - Byte-SHA differs due to sqlite3.backup() page-level rewrite (expected
+    for WAL-safe online backup — same pattern as 001 precedent 0dcdfaa)
+
+Rollback paths (per 09-01-PLAN.md rollback_plan):
+  Path A (preferred): cp data/vna_alerts.db.pre-phase09.bak data/vna_alerts.db
+  Path B (DOWN script): sqlite3 data/vna_alerts.db < scripts/migrations/002_rollback.sql
+  Path C (full reset — needs explicit Stefano OK per R-04/R-05):
+    git reset --hard v1.3-pre-phase-09
+    cp data/vna_alerts.db.pre-phase09.bak data/vna_alerts.db

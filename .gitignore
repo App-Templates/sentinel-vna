@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite WAL files (transient)
+*.db-shm
+*.db-wal
+
+# Planning artifacts (keep structure, ignore large files)
+# .planning/ is tracked
+
+# Phase 09 BACKFILL-01 resume state (regenerable)
+data/.backfill_checkpoint.json
+
+# Phase 17.1+ ephemeral deploy date capture (W-03 — plan-checker iter-1)
+.planning/phases/*/.deploy-date
+
+# Vercel
+.vercel/
+.vercel
+
+# Phase 17.4 Plan 04 — migration apply artifacts (gitignored per T-17.4-04-07)
+# Snapshot backup (binary, ~2MB, taken via Connection.backup() before apply)
+data/vna_alerts.db.pre-17.4-backfill-rewrite
+# SQLite lock file created by _acquire_apply_lock() during migration apply
+data/vna_alerts.db.apply.lock
+# Temporary restore file created by _restore() atomic rename pattern
+data/vna_alerts.db.restore.tmp

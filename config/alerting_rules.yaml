@@ -1,0 +1,223 @@
+comparative_alerting:
+  moving_average_14d:
+    divergence_threshold_percent: -25
+    enabled: true
+    severity: P1
+    sustained_hours: 3
+  yesterday_comparison:
+    enabled: true
+    severity_mapping:
+      below_minus_10: P2
+      below_minus_20: P1
+      below_minus_30: P0
+    threshold_percent: -30
+coverage_zero_alert:
+  baseline_weeks: 7
+  consecutive_hours: 2
+  coverage_threshold: 0.001
+  enabled: true
+  min_bacino: 100
+  severity: P1
+data_gap:
+  enabled: true
+  max_gap_hours: 4
+  severity: P1
+data_sources:
+  athena_retry_count: 1
+  athena_timeout_seconds: 30
+  cache_ttl_hours: 24
+drift_detection:
+  enabled: true
+  threshold_percent: -8
+  window_days: 7
+drift_regression:
+  cumulative_drop_threshold_percent: -15.0
+  enabled: true
+  min_data_points: 10
+  slope_threshold_percent_per_day: -2.0
+  window_days_max: 30
+  window_days_min: 14
+dual_thresholds:
+  attention:
+    ma_14d_divergence_percent: -12
+    revenue_drop_percent: -15
+    yesterday_delta_percent: -15
+  attention_severity: P2-WATCH
+  enabled: true
+  operational:
+    ma_14d_divergence_percent: -25
+    revenue_drop_percent: -30
+    yesterday_delta_percent: -30
+geo_clusters:
+  ITA:
+  - IT
+  ES:
+  - ES
+  LATAM:
+  - BR
+  - MX
+  - AR
+  - CO
+  - CL
+  - PE
+  PT:
+  - PT
+  OTHER:
+  - US
+  - UK
+  - FR
+  - DE
+gross_margin_alert:
+  enabled: true
+  threshold_pct: 25
+  severity: P1
+  baseline_weeks: 7
+  min_impressions: 1000
+leading_indicator:
+  enabled: true
+  metrics:
+  - ctr
+  - viewability
+  drop_threshold_pct: -15
+  baseline_weeks: 7
+  severity: P2-WATCH
+cross_channel_detection:
+  enabled: true
+  direct_increase_threshold_pct: 20
+  open_market_drop_threshold_pct: -10
+  channels_open_market:
+  - GOOGLE_ADEX
+  - OPEN_BIDDING
+  channel_direct: DIRECT
+last_updated: '2026-03-26T12:00:00.000000Z'
+margin_alert:
+  baseline_weeks: 7
+  ecpm_drop_thresholds:
+    P1:
+      drop_percent: -25
+      duration_hours: 3
+    P2:
+      drop_percent: -15
+      duration_hours: 4
+  enabled: true
+  min_impressions: 1000
+near_zero:
+  consecutive_periods: 3
+  coverage_threshold: 0.05
+  revenue_threshold_eur: 100
+notifications:
+  email_enabled: true
+  slack_enabled: true
+pricing_rule_alert:
+  baseline_weeks: 7
+  correlation_strength: -0.7
+  coverage_drop_threshold: -15
+  cpm_spike_threshold: 20
+  enabled: true
+  min_impressions: 500
+  severity: P1
+revenue_anomaly:
+  P0:
+    drop_percent: -15
+    duration_hours: 2
+  P1:
+    drop_percent: -10
+    duration_hours: 2
+  P2:
+    drop_percent: -5
+    duration_hours: 4
+scheduling:
+  channels:
+  - GOOGLE_ADEX
+  - OPEN_BIDDING
+  - HEADER_BIDDING_MAGNITE
+  - HEADER_BIDDING_PUBMATIC
+  - TAM
+  - DIRECT
+  - DEAL
+  interval_hours: 2
+  recheck_interval_minutes: 5
+  weekend_schedule:
+    enabled: true
+    run_hours:
+    - 10
+    - 18
+    times_per_day: 2
+slack_notifications:
+  channel: sentinel-test
+  digest_severities:
+  - P1
+  - P2
+  digest_time_utc: 08:00
+  immediate_severities:
+  - P0
+  webhook_url: https://hooks.slack.com/services/TEST123
+silent_failure_monitor:
+  # Phase 10 MONITOR-02 watchdog. Phase 10.1 hotfix re-enable 2026-04-24:
+  # - MONITOR-04 alerts.created_at canonical format (migration 004, Plan 10.1-03)
+  # - MONITOR-05 AND mode='LIVE' filter on pipeline_runs query (Plan 10.1-04)
+  # - MONITOR-06 find_open_alert boundary-day regression coverage (Plan 10.1-05)
+  # - MONITOR-07 Slack retry rewrite: HTTPError/URLError distinguished, Retry-After honored (Plan 10.1-06)
+  # - MONITOR-08 alerts_written_count semantics (Plan 10.1-07)
+  # Fires P0 Slack meta-alert on pipeline_runs_last_24h > 0 AND alerts_last_24h == 0.
+  enabled: true
+  cron_interval_minutes: 60
+  slack_channel_override: null
+top_contributors:
+  min_quota_percent: 1
+  top_n: 15
+top_publishers:
+- Mondadori
+- Mediamond
+- AdGage_Vocento
+- AdGage_PrensaIberica
+- AdGage_ElEspanol
+- Dorvan
+- AdGage_UnidadEditorial
+- TheCore
+- AdGage_AlayansMedia
+- AdGage_GrupoGodo
+- Piemme
+- TalksMedia
+- Adplay
+- AdGage_GrupoJoly
+- AdGage_Eleconomista
+- Magellano
+- Movingup
+- AdGage_Infobae
+- SpeeD
+- AdGage_TerraLatam
+- AdGage_Mediaset
+- RPDigital
+- AdGage_SociedadeVicraDesportiva
+- AdGage_LaRazon
+- Veesible
+- SVGruppe
+- AdGage_LaRepublica
+- Webboh
+- AdGage_ElNacional
+- AdGage_GrupoPerfilBR
+- Adgage_ElUniversal
+- AdGage_Cofina
+- AdGage_GrupoMultimedios
+- AdGage_NoticiasIlimitadas
+- Yobee
+- Sportnetwork
+- Mondadori_npa
+- ANSA
+- Italiaonline
+- eAdv
+- Netaddiction
+- Giornalone
+- Ilnapolista
+- Mosai.co
+- Yieldbird
+- AdGage_LaVozdeGalicia
+- AdGage_GrupoSerra
+- AdGage_EdiGrup
+- AdGage_EdicionesJemma
+- AdAlliance
+triage:
+  coverage_driven_threshold: -10
+  traffic_driven_threshold: -10
+version: 1.2.0

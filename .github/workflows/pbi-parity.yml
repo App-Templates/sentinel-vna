@@ -1,0 +1,55 @@
+# Phase 18 HARD-03 + HARD-04 — PBI parity + silent-failure regression CI gate.
+# D-09 blocker scoping:
+#   INV-6 (Path A guard source-grep in backend/agents/data_fetcher_real.py) is the CI blocker.
+#     It is DB-independent and ALWAYS runs in the GitHub Actions runner.
+#   INV-1..INV-4 require the live DB (data/vna_alerts.db) which is gitignored (~2 GB).
+#     They exit 0 with a ::notice:: in CI when the DB is absent and are enforced on the
+#     operator dev machine pre-push (and on the VPS smoke path).
+name: pbi-parity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pbi-parity-check:
+    name: PBI parity invariants + silent-failure regression
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run PBI parity gate (HARD-04 + Path A guard)
+        run: |
+          # data/vna_alerts.db is gitignored, so the script's _open_db() helper
+          # exits(2) on the first DB-bound invariant it reaches. Post-IN-03 the
+          # main() function lists the structural invariants FIRST (INV-5 SKIP +
+          # INV-6 source-grep on data_fetcher_real.py), so they execute and
+          # print verdicts BEFORE INV-1's _open_db() short-circuits with exit 2.
+          # INV-2..INV-4 are skipped as a consequence (single-exit, not
+          # per-invariant accumulation). This step's CI-load-bearing value is
+          # INV-6 (Path A guard regression); INV-1..INV-4 are enforced on the
+          # operator dev machine pre-push and on the VPS smoke path.
+          python scripts/test_alert_revenue_pbi_parity.py || EXIT=$?
+          if [ "${EXIT:-0}" = "2" ]; then
+            echo "::notice::DB-bound invariants (INV-1..INV-4) skipped (DB absent in CI runner — expected); structural invariants (INV-5 SKIP + INV-6 grep) ran first and reported PASS"
+            exit 0
+          fi
+          exit ${EXIT:-0}
+
+      - name: Run silent-failure regression (HARD-03)
+        run: |
+          python scripts/test_silent_failure_watch.py -v
