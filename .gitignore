@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite WAL files (transient)
+*.db-shm
+*.db-wal
+
+# Planning artifacts (keep structure, ignore large files)
+# .planning/ is tracked
+
+# Phase 09 BACKFILL-01 resume state (regenerable)
+data/.backfill_checkpoint.json
+
+# Vercel
+.vercel/
+.vercel

@@ -1,0 +1,12 @@
+backend/
+data/
+scripts/
+config/
+.venv/
+node_modules/
+*.parquet
+*.db
+*.db-shm
+*.db-wal
+*.csv
+requirements.txt

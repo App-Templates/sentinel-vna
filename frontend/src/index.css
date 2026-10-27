@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  /* === Sentinel Design Tokens === */
+
+  /* Primary brand */
+  --color-brand-primary: #1e40af;
+  --color-brand-secondary: #3b82f6;
+  --color-brand-accent: #d97706;
+
+  /* Severity colors */
+  --color-severity-p0: #dc2626;
+  --color-severity-p1: #ea580c;
+  --color-severity-p2: #ca8a04;
+
+  /* Status colors */
+  --color-status-open: #2563eb;
+  --color-status-ack: #7c3aed;
+  --color-status-resolved: #16a34a;
+  --color-status-snoozed: #6b7280;
+
+  /* Triage colors */
+  --color-triage-traffic: #4f46e5;
+  --color-triage-coverage: #d97706;
+  --color-triage-mixed: #e11d48;
+  --color-triage-revenue: #475569;
+
+  /* Metric colors */
+  --color-metric-positive: #16a34a;
+  --color-metric-negative: #dc2626;
+  --color-metric-neutral: #6b7280;
+
+  /* Surface */
+  --color-bg-app: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #0f172a;
+  --color-bg-sidebar-hover: #1e293b;
+
+  /* Sidebar text */
+  --color-sidebar-text: #94a3b8;
+  --color-sidebar-text-active: #f8fafc;
+  --color-sidebar-border: #1e293b;
+
+  /* Border */
+  --color-border-default: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+
+  /* Chart palette — consistent across all charts */
+  --chart-blue: #3b82f6;
+  --chart-gray: #94a3b8;
+  --chart-amber: #f59e0b;
+  --chart-red: #ef4444;
+  --chart-orange: #f97316;
+  --chart-green: #22c55e;
+  --chart-violet: #8b5cf6;
+  --chart-grid: #f1f5f9;
+  --chart-axis: #e2e8f0;
+  --chart-tick: #64748b;
+}
+
+/* === Base === */
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-app);
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* === Typography scale === */
+h1 { font-size: 1.5rem;   font-weight: 700; line-height: 1.25; color: #0f172a; }
+h2 { font-size: 1.25rem;  font-weight: 600; line-height: 1.3;  color: #0f172a; }
+h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.4;  color: #0f172a; }
+h4 { font-size: 0.9375rem;font-weight: 600; line-height: 1.4;  color: #1e293b; }
+
+/* === Focus ring (consistent across interactive elements) === */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* === Selection === */
+::selection {
+  background-color: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* === Transition utilities === */
+.transition-fast { transition: all 150ms ease-out; }
+.transition-base { transition: all 200ms ease-out; }
+.transition-slow { transition: all 300ms ease-out; }
+
+/* === Chart tooltip shared style === */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  border-radius: 8px !important;
+  border-color: #e2e8f0 !important;
+  font-size: 12px !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -1px rgb(0 0 0 / 0.05) !important;
+}
+
+/* === Card elevation system === */
+.card-base   { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04); }
+.card-raised { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -1px rgb(0 0 0 / 0.05); }
+.card-float  { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -2px rgb(0 0 0 / 0.04); }
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

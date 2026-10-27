@@ -1,0 +1,45 @@
+# Phase 08 SCHEMA-04 — Sell Type Proxy Mapping
+#
+# Single source of truth for channel_group → sell_type_proxy derivation.
+# Consumed by:
+#   - scripts/etl_csv_to_parquet.py (adds derived column to daily/hourly parquet)
+#   - [future] backend/api/publisher_routes.py (API-02 sell_type query param, Phase 10.5)
+#   - [future] frontend/src/components/PublishersPage.tsx (CORR-11 filter UI, Phase 14)
+#
+# CRITICAL — every value in backend/db/models.py ChannelGroup enum MUST appear
+# exactly once in this file, across all 5 groups. Validated by
+# scripts/test_etl_schema_v2.py Test 2.
+
+_meta:
+  source_confidence: "95%"
+  derived_from: "config/alerting_rules.yaml:84-91 (cross_channel_detection)"
+  deep_audit_ref: ".planning/intel/sentinel-2026-04-22/deep-audit-evening.md:22-32"
+  applies_to_requirement: SCHEMA-04
+  version: 1
+  created: "2026-04-23"
+  notes: |
+    - GOOGLE is a legacy alias for GOOGLE_ADEX pre-v1.2 rename; both map to Open_Market.
+    - TAM (Transparent Ad Marketplace) is classified as "Other" pending clearer taxonomy
+      (deferred to v1.4 OPS-02 if upstream exposes real sell_type).
+    - Unknown channel_group values default to "Other" in ETL (graceful degradation).
+
+# Channel group → sell_type_proxy mapping.
+# Keys = sell_type_proxy values (written to parquet).
+# Values = list of channel_group values that map TO that sell_type.
+Open_Market:
+  - GOOGLE_ADEX
+  - OPEN_BIDDING
+  - GOOGLE          # legacy alias for GOOGLE_ADEX
+
+Header_Bidding:
+  - HEADER_BIDDING_MAGNITE
+  - HEADER_BIDDING_PUBMATIC
+
+Direct:
+  - DIRECT
+
+Deal:
+  - DEAL
+
+Other:
+  - TAM
